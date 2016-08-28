@@ -11,8 +11,11 @@ public class GameManager : MonoBehaviour
 
     // General
     private bool initialized = false;
+    private bool game_over = false;
 
     // Players
+    public Color[] player_colors;
+    public string[] player_names;
     private int num_players = 2;
     private Player[] players;
 
@@ -36,13 +39,18 @@ public class GameManager : MonoBehaviour
     // Events
     public System.Action on_initialized;
     public System.Action on_history_change;
-    
+    public System.Action<int, float> on_win;
+
 
     // PUBLIC ACCESSORS
 
     public bool IsInitialized()
     {
         return initialized;
+    }
+    public bool IsGameOver()
+    {
+        return game_over;
     }
     public Timeline GetTimeline()
     {
@@ -70,6 +78,30 @@ public class GameManager : MonoBehaviour
         return list;
     }
 
+    public int GetStateWinner(float time)
+    {
+        WorldState state = GetState(time);
+        HashSet<int> alive_players = new HashSet<int>();
+
+        for (int i = 0; i < planets.Length; ++i)
+        {
+            if (state.planet_ownerIDs[i] >= 0)
+                alive_players.Add(state.planet_ownerIDs[i]);
+        }
+
+        if (alive_players.Count == 1)
+        {
+            // Only one player alive - the winner
+            foreach (int i in alive_players)
+                return i; // HACKY
+
+            return alive_players.GetEnumerator().Current;
+        }
+
+        // No winner
+        return -1;
+    }
+
 
     // PUBLIC MODIFIERS
 
@@ -83,6 +115,11 @@ public class GameManager : MonoBehaviour
         SaveCommand(cmd);
         RemakeKeyStates();
         LoadState(GetState(timeline.Time));
+    }
+    public void OnWin(int winner, float win_time)
+    {
+        game_over = true;
+        if (on_win != null) on_win(winner, win_time);
     }
 
 
@@ -234,10 +271,12 @@ public class GameManager : MonoBehaviour
         foreach (Flight flight in state.flights)
         {
             Fleet fleet = Instantiate(fleet_prefab);
-            fleet.Initialize(flight.owner_id, flight.ships);
+            fleet.Initialize(flight.owner_id, flight.ships, player_colors[flight.owner_id]);
             fleet.SetPosition(planets[flight.start_planet_id], planets[flight.end_planet_id], flight.GetProgress(state.time));
             fleets.Add(fleet);
         }
+
+        // Have server check win condition
     }
     private WorldState GetState(float time)
     {

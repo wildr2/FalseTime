@@ -33,6 +33,8 @@ public class Player : NetworkBehaviour
 
         if (isLocalPlayer)
         {
+            gm.GetTimeline().on_time_set += OnTimeSet;
+
             foreach (Planet planet in gm.GetPlanets())
             {
                 // Planet mouse events
@@ -70,22 +72,23 @@ public class Player : NetworkBehaviour
         }
     }
 
-
-    // Events
-    private void OnClickAway()
+    private void DeselectPlanet()
     {
         if (selected_planet != null)
         {
-            // Deselect planet
             selected_planet.HideHighlight();
             selected_planet = null;
         }
     }
+
+    // Events
+    private void OnClickAway()
+    {
+        DeselectPlanet();
+    }
     private void OnPlanetClick(Planet planet)
     {
-        // Prevent selection of non owned planets
-        //if (selected_planet != null && selected_planet.OwnerID != player_id)
-        //    selected_planet = null;
+        if (gm.IsGameOver()) return;
 
         if (selected_planet == null)
         {
@@ -104,13 +107,14 @@ public class Player : NetworkBehaviour
             CmdIssuePlayerCmd(player_id, selected_planet.PlanetID, planet.PlanetID, gm.GetTimeline().Time);
 
             // UI
-            selected_planet.HideHighlight();
-            selected_planet = null;
+            DeselectPlanet();
         }
     }
     private void OnPlanetMouseEnter(Planet planet)
     {
         pointed_planet = planet;
+
+        if (gm.IsGameOver()) return;
 
         // Don't reselect selected planet
         if (planet == selected_planet) return;
@@ -133,6 +137,8 @@ public class Player : NetworkBehaviour
     {
         pointed_planet = null;
 
+        if (gm.IsGameOver()) return;
+
         if (planet != selected_planet)
         {
             // Unhighlight not selected planet
@@ -140,6 +146,13 @@ public class Player : NetworkBehaviour
         }
             
     }
+    private void OnTimeSet(float time)
+    {
+        if (gm.IsGameOver()) return;
+
+        CmdCheckForWin(time);
+    }
+
 
     // Networking
     [Command]
@@ -152,5 +165,24 @@ public class Player : NetworkBehaviour
     {
         PlayerCmd cmd = new PlayerCmd(time, selected_planet_id, target_planet_id, player_id);
         gm.AddPlayerCmd(cmd);
+    }
+
+    [Command]
+    private void CmdCheckForWin(float time)
+    {
+        int winner = gm.GetStateWinner(time);
+        if (winner >= 0)
+        {
+            // Win
+            Tools.Log("PLAYER " + winner + " WINS!");
+            RpcInformWin(winner, time);
+        }
+    }
+    [ClientRpc]
+    private void RpcInformWin(int winner, float win_time)
+    {
+        gm.OnWin(winner, win_time);
+
+        DeselectPlanet();
     }
 }

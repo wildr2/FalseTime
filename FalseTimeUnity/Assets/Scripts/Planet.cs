@@ -4,8 +4,9 @@ using System.Collections;
 
 public class Planet : MonoBehaviour
 {
+    private GameManager gm;
+
     public Color neutral_color;
-    public Color[] player_colors;
 
     private Text text;
     public SpriteRenderer sprite_sr;
@@ -31,6 +32,7 @@ public class Planet : MonoBehaviour
 
     public void Initialize(int id, float size, int pop, int ownerID)
     {
+        gm = FindObjectOfType<GameManager>();
         text = GetComponentInChildren<Text>();
 
         PlanetID = id;
@@ -64,7 +66,7 @@ public class Planet : MonoBehaviour
         text.text = pop.ToString();
 
         OwnerID = ownerID;
-        sprite_sr.color = ownerID == -1 ? neutral_color : player_colors[ownerID];
+        sprite_sr.color = ownerID == -1 ? neutral_color : gm.player_colors[ownerID];
     }
 
 

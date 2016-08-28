@@ -4,20 +4,18 @@ using System.Collections;
 
 public class Fleet : MonoBehaviour
 {
-    public Color[] player_colors;
-
     public SpriteRenderer sprite_sr;
     private Text text;
 
     public int OwnerID { get; private set; }
 
 
-    public void Initialize(int ownerID, int number_of_ships)
+    public void Initialize(int ownerID, int number_of_ships, Color player_color)
     {
         text = GetComponentInChildren<Text>();
 
         OwnerID = ownerID;
-        sprite_sr.color = player_colors[ownerID];
+        sprite_sr.color = player_color;
         text.text = number_of_ships.ToString();
         transform.localScale = Vector3.one * (0.8f + number_of_ships / 50f);
     }

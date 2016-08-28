@@ -13,7 +13,7 @@ public class Timeline : MonoBehaviour
     public RectTransform keystates_parent, cmds_parent;
     public RectTransform line, knob, marker_prefab;
     private bool pointer_down;
-    public Text clock;
+    public Text clock, win_text;
 
     // Interaction
     private bool paused = true;
@@ -40,11 +40,21 @@ public class Timeline : MonoBehaviour
         if (cam != null) cam.EnableTranslation(true);
     }
 
+    private void OnWin(int winner, float win_time)
+    {
+        SetTime(win_time);
+        SetMarkerPosition(knob, win_time);
+        UpdateClock();
+
+        win_text.transform.parent.gameObject.SetActive(true);
+        win_text.text = gm.player_names[winner].ToUpper() + " WINS";
+    }
 
     private void Awake()
     {
         gm = FindObjectOfType<GameManager>();
         gm.on_history_change += ReMakeHistoryMarkers;
+        gm.on_win += OnWin;
 
         cam = Camera.main.GetComponent<CamController>();
 
@@ -53,6 +63,8 @@ public class Timeline : MonoBehaviour
     }
     private void Update()
     {
+        if (gm.IsGameOver()) return;
+
         if (pointer_down)
         {
             // Set timeline knob position
