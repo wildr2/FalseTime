@@ -235,7 +235,7 @@ public class GameManager : MonoBehaviour
             float size = Random.Range(0.28f, 2f);
             int pop = (int)(size * Random.value * 10);
             planet.Initialize(i, size, pop, -1);
-            planet.transform.position = positions[i] * 2;
+            planet.transform.position = positions[i] * 2.5f;
 
             planets[i] = planet;
         }

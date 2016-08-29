@@ -14,72 +14,9 @@ Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUn
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.109 seconds
+- Completed reload, in  0.114 seconds
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.dll (this message is harmless)
 desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
-<RI> Initialized touch support.
-UnloadTime: 0.439696 ms
-Initialize engine version: 5.3.5f1 (960ebf59018a)
-GfxDevice: creating device client; threaded=1
-Direct3D:
-    Version:  Direct3D 11.0 [level 11.0]
-    Renderer: NVIDIA GeForce GTX 970 (ID=0x13c2)
-    Vendor:   NVIDIA
-    VRAM:     3072 MB
-Begin MonoManager ReloadAssembly
-Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.dll (this message is harmless)
-Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.dll into Unity Child Domain
-Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
-Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
-Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
-Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
-Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
-Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.036 seconds
-Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.Core.dll (this message is harmless)
-Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.dll (this message is harmless)
-desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
-<RI> Initializing input.
-<RI> Input initialized.
-<RI> Initialized touch support.
-Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.541576 ms
-
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 367.
-Total: 0.342214 ms (FindLiveObjects: 0.031030 ms CreateObjectMapping: 0.011709 ms MarkObjects: 0.296253 ms  DeleteObjects: 0.002927 ms)
-
-<color=#0000FF>Registered player 0</color>
-
- 
-(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
-
-UnloadTime: 0.420083 ms
-Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.677408 ms
-
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 362.
-Total: 0.272249 ms (FindLiveObjects: 0.015515 ms CreateObjectMapping: 0.011124 ms MarkObjects: 0.242389 ms  DeleteObjects: 0.002927 ms)
-
-<color=#0000FF>Registered player 1</color>
-
- 
-(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
-
-<color=#0000FF>Registered player 0</color>
-
- 
-(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
-
-<color=#0000FF>Registered player 1</color>
-
- 
-(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
-
-Setting up 1 worker threads for Enlighten.
-  Thread -> id: 3374 -> priority: 1 
-Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:53546}
-Setting up 1 worker threads for Enlighten.
-  Thread -> id: 2cb8 -> priority: 1 
