@@ -277,13 +277,13 @@ public class Tools
         Debug.DrawLine(pos - new Vector2(1, 1) * s, pos + new Vector2(1, 1) * s, color, duration);
         Debug.DrawLine(pos - new Vector2(1, -1) * s, pos + new Vector2(1, -1) * s, color, duration);
     }
-    public static void Log(string s)
+    public static void Log(object obj)
     {
-        Debug.Log(s + "\n");
+        Debug.Log(obj.ToString() + "\n");
     }
-    public static void Log(string s, Color color)
+    public static void Log(object obj, Color color)
     {
-        Debug.Log("<color=#" + ColorToHex(color) + ">" + s + "</color>\n");
+        Debug.Log("<color=#" + ColorToHex(color) + ">" + obj.ToString() + "</color>\n");
     }
 }
 

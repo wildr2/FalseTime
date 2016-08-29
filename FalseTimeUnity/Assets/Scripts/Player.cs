@@ -4,9 +4,6 @@ using System.Collections;
 
 public class Player : NetworkBehaviour
 {
-    // Dev 
-    public bool total_control = false;
-
     // General
     [SyncVar] public int player_id;
     private bool initialized = false;
@@ -17,6 +14,22 @@ public class Player : NetworkBehaviour
     // Selection
     private Planet pointed_planet;
     private Planet selected_planet;
+
+    // Power
+    private float power_bar_seconds = 15;
+    private int max_power = 4;
+    private float power = 0;
+
+    // Events
+    public System.Action<float> on_power_change;
+
+
+    // PUBLIC ACCESSORS
+
+    public float GetPower()
+    {
+        return power;
+    }
 
 
     // PRIVATE MODIFIERS
@@ -46,12 +59,16 @@ public class Player : NetworkBehaviour
         }
         
         gm.RegisterPlayer(this);
+
+        SetPower(0);
+
         initialized = true;
     }
     private IEnumerator HumanUpdate()
     {
         while (true)
         {
+            // Interaction
             bool click = Input.GetMouseButtonDown(0);
 
             if (click)
@@ -68,6 +85,10 @@ public class Player : NetworkBehaviour
                 }
             }
 
+            // Power Growth
+            SetPower(Mathf.Min(power + 1f / power_bar_seconds * Time.deltaTime, max_power));
+
+
             yield return null;
         }
     }
@@ -80,6 +101,11 @@ public class Player : NetworkBehaviour
             selected_planet = null;
         }
     }
+    private void SetPower(float value)
+    {
+        power = gm.debug_powers ? max_power : value;
+        if (on_power_change != null) on_power_change(power);
+    }
 
     // Events
     private void OnClickAway()
@@ -88,11 +114,11 @@ public class Player : NetworkBehaviour
     }
     private void OnPlanetClick(Planet planet)
     {
-        if (gm.IsGameOver()) return;
+        if (!gm.IsGamePlaying()) return;
 
         if (selected_planet == null)
         {
-            if (planet.OwnerID == player_id || total_control)
+            if (planet.OwnerID == player_id || gm.debug_solo)
             {
                 // Select planet
                 selected_planet = planet;
@@ -101,20 +127,25 @@ public class Player : NetworkBehaviour
         }
         else if (planet != selected_planet)
         {
-            // Issue player command 
-            //PlayerCmd cmd = new PlayerCmd(gm.GetTimeline().Time, selected_planet, planet, selected_planet.OwnerID);
-            //gm.AddPlayerCmd(cmd);
-            CmdIssuePlayerCmd(player_id, selected_planet.PlanetID, planet.PlanetID, gm.GetTimeline().Time);
+            if (power >= 1)
+            {
+                // Issue player command 
+                CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID, planet.PlanetID, gm.GetTimeline().Time);
 
-            // UI
-            DeselectPlanet();
+                // Cost
+                SetPower(power - 1);
+
+                // UI
+                DeselectPlanet();
+            }
+            
         }
     }
     private void OnPlanetMouseEnter(Planet planet)
     {
         pointed_planet = planet;
 
-        if (gm.IsGameOver()) return;
+        if (!gm.IsGamePlaying()) return;
 
         // Don't reselect selected planet
         if (planet == selected_planet) return;
@@ -137,7 +168,7 @@ public class Player : NetworkBehaviour
     {
         pointed_planet = null;
 
-        if (gm.IsGameOver()) return;
+        if (!gm.IsGamePlaying()) return;
 
         if (planet != selected_planet)
         {
@@ -148,7 +179,7 @@ public class Player : NetworkBehaviour
     }
     private void OnTimeSet(float time)
     {
-        if (gm.IsGameOver()) return;
+        if (!gm.IsGamePlaying()) return;
 
         CmdCheckForWin(time);
     }

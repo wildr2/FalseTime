@@ -6,23 +6,27 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-    // Dev
+    // Debug
+    public bool debug_solo = false;
+    public bool debug_powers = false;
     public bool log_states = false;
 
     // General
     private bool initialized = false;
     private bool game_over = false;
+    public Transform connection_screen;
 
     // Players
     public Color[] player_colors;
     public string[] player_names;
-    private int num_players = 2;
-    private Player[] players;
+    public int num_players = 2;
+    private int players_registered = 0;
+    public Player[] players;
 
     // References
     public SeedManager seed_manager;
     private Timeline timeline;
-    
+
     // History
     private WorldState state_0;
     private LinkedList<WorldState> key_states;
@@ -38,6 +42,7 @@ public class GameManager : MonoBehaviour
 
     // Events
     public System.Action on_initialized;
+    public System.Action<Player> on_player_registered;
     public System.Action on_history_change;
     public System.Action<int, float> on_win;
 
@@ -48,10 +53,19 @@ public class GameManager : MonoBehaviour
     {
         return initialized;
     }
+    public bool ArePlayersRegistered()
+    {
+        return players_registered == num_players || (debug_solo && players_registered == 1);
+    }
     public bool IsGameOver()
     {
         return game_over;
     }
+    public bool IsGamePlaying()
+    {
+        return ArePlayersRegistered() && !IsGameOver();
+    }
+    
     public Timeline GetTimeline()
     {
         return timeline;
@@ -59,6 +73,14 @@ public class GameManager : MonoBehaviour
     public Planet[] GetPlanets()
     {
         return planets;
+    }
+    public Player GetLocalPlayer()
+    {
+        foreach (Player p in players)
+        {
+            if (p.isLocalPlayer) return p;
+        }
+        return null;
     }
     public LinkedList<WorldState> GetKeyStates()
     {
@@ -68,16 +90,29 @@ public class GameManager : MonoBehaviour
     {
         return player_cmds;
     }
-    public List<PlayerCmd> GetInvalidPlayerCmds()
-    {
-        List<PlayerCmd> list = new List<PlayerCmd>();
-        foreach (PlayerCmd cmd in player_cmds)
-        {
-            if (!cmd.IsValid(GetState(cmd.time))) list.Add(cmd);
-        }
-        return list;
-    }
 
+    public WorldState GetState(float time)
+    {
+        WorldState recent = GetMostRecentKeyState(time).Value;
+        WorldState newstate = new WorldState(recent);
+        newstate.time = time;
+
+        // Interpolate
+        float time_since = time - recent.time;
+
+        for (int i = 0; i < planets.Length; ++i)
+        {
+            int growth = Mathf.FloorToInt(planets[i].GetPopPerSecond(newstate.planet_ownerIDs[i]) * time_since);
+            newstate.planet_pops[i] += growth;
+        }
+
+        //foreach (Flight flight in newstate.flights)
+        //{
+        //    flight.progress += flight.progress_rate * time_since; 
+        //}
+
+        return newstate;
+    }
     public int GetStateWinner(float time)
     {
         WorldState state = GetState(time);
@@ -102,12 +137,20 @@ public class GameManager : MonoBehaviour
         return -1;
     }
 
+    
+
+
 
     // PUBLIC MODIFIERS
 
     public void RegisterPlayer(Player player)
     {
         players[player.player_id] = player;
+        ++players_registered;
+
+        if (on_player_registered != null) on_player_registered(player);
+        if (ArePlayersRegistered()) connection_screen.gameObject.SetActive(false);
+
         Tools.Log("Registered player " + player.player_id, Color.blue);
     }
     public void AddPlayerCmd(PlayerCmd cmd)
@@ -127,7 +170,16 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        // Debug options
+        if (!Debug.isDebugBuild)
+        {
+            log_states = false;
+            debug_solo = false;
+            debug_powers = false;
+        }
+
         // Players
+        if (num_players < 2) Debug.LogError("num_players must be > 1");
         players = new Player[num_players];
 
         // Fleets
@@ -189,7 +241,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Select player start planets
-        for (int i = 0; i < 2; ++i)
+        for (int i = 0; i < Mathf.Max(num_players, 2); ++i)
         {
             int planet_id = Random.Range(0, n);
             while (planets[planet_id].OwnerID != -1)
@@ -277,28 +329,6 @@ public class GameManager : MonoBehaviour
         }
 
         // Have server check win condition
-    }
-    private WorldState GetState(float time)
-    {
-        WorldState recent = GetMostRecentKeyState(time).Value;
-        WorldState newstate = new WorldState(recent);
-        newstate.time = time;
-
-        // Interpolate
-        float time_since = time - recent.time;
-
-        for (int i = 0; i < planets.Length; ++i)
-        {
-            int growth = Mathf.FloorToInt(planets[i].GetPopPerSecond(newstate.planet_ownerIDs[i]) * time_since);
-            newstate.planet_pops[i] += growth;
-        }
-
-        //foreach (Flight flight in newstate.flights)
-        //{
-        //    flight.progress += flight.progress_rate * time_since; 
-        //}
-
-        return newstate;
     }
 
     // Key States
@@ -515,7 +545,7 @@ public class GameManager : MonoBehaviour
         LoadState(GetState(time));
     }
 
-    // Dev
+    // Debug
     private void LogStates()
     {
         foreach (WorldState state in key_states)
@@ -616,8 +646,6 @@ public class Flight
     public int ships;
     public int start_planet_id;
     public int end_planet_id;
-    //public float progress;
-    //public float progress_rate;
     public float start_time, end_time;
 
     public Flight(int owner_id, int ships, Planet start_planet, Planet end_planet, float start_time)
@@ -631,8 +659,6 @@ public class Flight
             - start_planet.Radius - end_planet.Radius;
 
         this.start_time = start_time;
-        //progress = 0;
-        //progress_rate = speed / dist;
         end_time = start_time + dist / speed;
     }
     public Flight(Flight to_copy)

@@ -9,8 +9,7 @@ public class Timeline : MonoBehaviour
     private CamController cam;
 
     // UI
-    public Color keystate_color, cmd_color;
-    public RectTransform keystates_parent, cmds_parent;
+    public RectTransform cmds_parent;
     public RectTransform line, knob, marker_prefab;
     private bool pointer_down;
     public Text clock, win_text;
@@ -63,7 +62,7 @@ public class Timeline : MonoBehaviour
     }
     private void Update()
     {
-        if (gm.IsGameOver()) return;
+        if (!gm.IsGamePlaying()) return;
 
         if (pointer_down)
         {
@@ -102,24 +101,25 @@ public class Timeline : MonoBehaviour
     {
         // Delete old markers
         Tools.DestroyChildren(cmds_parent);
-        Tools.DestroyChildren(keystates_parent);
-
-        // Keystates
-        foreach (WorldState state in gm.GetKeyStates())
-        {
-            RectTransform marker = Instantiate(marker_prefab);
-            marker.SetParent(keystates_parent, false);
-            SetMarkerPosition(marker, state.time);
-            marker.GetComponent<Image>().color = keystate_color;
-        }
 
         // Commands
-        foreach (PlayerCmd cmd in gm.GetInvalidPlayerCmds())
+        foreach (PlayerCmd cmd in gm.GetPlayerCmds())
         {
             RectTransform marker = Instantiate(marker_prefab);
             marker.SetParent(cmds_parent, false);
             SetMarkerPosition(marker, cmd.time);
-            marker.GetComponent<Image>().color = cmd_color;
+            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, line.rect.height * );
+
+            Color color = gm.player_colors[cmd.player_id];
+
+            if (cmd.IsValid(gm.GetState(cmd.time)))
+            {
+                marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0);
+            }
+            else
+            {
+                marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0.5f);
+            }
         }
     }
 
