@@ -57,7 +57,8 @@ public class Player : NetworkBehaviour
 
             StartCoroutine(HumanUpdate());
         }
-        
+
+
         gm.RegisterPlayer(this);
 
         SetPower(0);

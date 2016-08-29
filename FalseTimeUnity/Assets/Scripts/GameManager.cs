@@ -143,8 +143,19 @@ public class GameManager : MonoBehaviour
 
     // PUBLIC MODIFIERS
 
+    public void RegisterPlayerOld(Player player)
+    {
+        players[player.player_id] = player;
+        ++players_registered;
+
+        if (on_player_registered != null) on_player_registered(player);
+        if (ArePlayersRegistered()) connection_screen.gameObject.SetActive(false);
+
+        Tools.Log("Registered player " + player.player_id, Color.blue);
+    }
     public void RegisterPlayer(Player player)
     {
+        player.player_id = players_registered;
         players[player.player_id] = player;
         ++players_registered;
 
