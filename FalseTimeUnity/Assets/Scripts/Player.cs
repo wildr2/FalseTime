@@ -68,6 +68,8 @@ public class Player : NetworkBehaviour
     {
         while (true)
         {
+            while (!gm.IsGamePlaying()) yield return null;
+
             // Interaction
             bool click = Input.GetMouseButtonDown(0);
 
