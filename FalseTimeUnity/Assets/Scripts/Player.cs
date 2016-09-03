@@ -18,6 +18,7 @@ public class Player : NetworkBehaviour
     // Power
     private float power_bar_seconds = 15;
     private int max_power = 4;
+    private float req_power = 1;
     private float power = 0;
 
     // Events
@@ -30,6 +31,14 @@ public class Player : NetworkBehaviour
     {
         return power;
     }
+    public float GetPowerMax()
+    {
+        return max_power;
+    }
+    public float GetPowerReq()
+    {
+        return req_power;
+    }
 
 
     // PRIVATE MODIFIERS
@@ -38,6 +47,7 @@ public class Player : NetworkBehaviour
     {
         gm = FindObjectOfType<GameManager>();
         StartCoroutine(Initialize());
+        gm.on_history_change += OnHistoryChange;
     }
 
     private IEnumerator Initialize()
@@ -109,6 +119,16 @@ public class Player : NetworkBehaviour
         power = gm.debug_powers ? max_power : value;
         if (on_power_change != null) on_power_change(power);
     }
+    private void UpdateRequiredPower()
+    {
+        req_power = 1;
+        foreach (PlayerCmd cmd in gm.GetPlayerCmds())
+        {
+            float closeness = Mathf.Pow(1f / (Mathf.Abs(cmd.time - gm.GetTimeline().Time) + 1), 4);
+            req_power += closeness * 5f;
+        }
+    }
+
 
     // Events
     private void OnClickAway()
@@ -184,9 +204,18 @@ public class Player : NetworkBehaviour
     {
         if (!gm.IsGamePlaying()) return;
 
+        // Cmd cost
+        UpdateRequiredPower();
+        SetPower(power); // force ui update
+
+        // Win condition
         CmdCheckForWin(time);
     }
-
+    private void OnHistoryChange()
+    {
+        UpdateRequiredPower();
+        SetPower(power); // force ui update
+    }
 
     // Networking
     [Command]

@@ -3,10 +3,21 @@ using System.Collections;
 
 public class PowerBar : MonoBehaviour
 {
-    public Transform fill;
+    private RectTransform rect;
+    public RectTransform fill, goal_indicator;
 
-    public void SetFilled(bool filled)
+    private void Awake()
     {
-        fill.gameObject.SetActive(filled);
+        rect = GetComponent<RectTransform>();
+    }
+
+    public void SetFill(float amount)
+    {
+        fill.offsetMax = new Vector2(fill.offsetMax.x, (1-amount) * -rect.rect.height);
+    }
+    public void SetFillGoal(float amount)
+    {
+        goal_indicator.anchoredPosition = new Vector2(goal_indicator.anchoredPosition.x,
+            amount * rect.rect.height);
     }
 }

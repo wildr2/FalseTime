@@ -6,11 +6,12 @@ using System.Collections.Generic;
 public class PowerUI : MonoBehaviour
 {
     private GameManager gm;
-    private PowerBar[] bars;
+    private PowerBar bar;
+    private Player player;
 
     private void Awake()
     {
-        bars = GetComponentsInChildren<PowerBar>();
+        bar = GetComponent<PowerBar>();
         gm = FindObjectOfType<GameManager>();
         gm.on_player_registered += OnPlayerRegistered;
     }
@@ -19,14 +20,12 @@ public class PowerUI : MonoBehaviour
         if (player.isLocalPlayer)
         {
             player.on_power_change += OnPowerChange;
+            this.player = player;
         }    
     }
     private void OnPowerChange(float power)
     {
-        int num_bars = (int)power;
-        for (int i = 0; i < bars.Length; ++i)
-        {
-            bars[bars.Length-1 - i].SetFilled(i < num_bars);
-        }
+        bar.SetFill(power / player.GetPowerMax());
+        bar.SetFillGoal(player.GetPowerReq() / player.GetPowerMax());
     }
 }
