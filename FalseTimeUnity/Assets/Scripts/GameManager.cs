@@ -21,7 +21,7 @@ public class GameManager : MonoBehaviour
     public string[] player_names;
     public int num_players = 2;
     private int players_registered = 0;
-    public Player[] players;
+    public Dictionary<int, Player> players; // keys are player ids
 
     // References
     public SeedManager seed_manager;
@@ -33,7 +33,7 @@ public class GameManager : MonoBehaviour
     private LinkedList<PlayerCmd> player_cmds;
 
     // Planets
-    private Planet[] planets;
+    private Planet[] planets; // indexed by planet id
     public Planet planet_prefab;
 
     // Fleets
@@ -76,7 +76,7 @@ public class GameManager : MonoBehaviour
     }
     public Player GetLocalPlayer()
     {
-        foreach (Player p in players)
+        foreach (Player p in players.Values)
         {
             if (p.isLocalPlayer) return p;
         }
@@ -105,11 +105,6 @@ public class GameManager : MonoBehaviour
             int growth = Mathf.FloorToInt(planets[i].GetPopPerSecond(newstate.planet_ownerIDs[i]) * time_since);
             newstate.planet_pops[i] += growth;
         }
-
-        //foreach (Flight flight in newstate.flights)
-        //{
-        //    flight.progress += flight.progress_rate * time_since; 
-        //}
 
         return newstate;
     }
@@ -143,19 +138,8 @@ public class GameManager : MonoBehaviour
 
     // PUBLIC MODIFIERS
 
-    public void RegisterPlayerOld(Player player)
-    {
-        players[player.player_id] = player;
-        ++players_registered;
-
-        if (on_player_registered != null) on_player_registered(player);
-        if (ArePlayersRegistered()) connection_screen.gameObject.SetActive(false);
-
-        Tools.Log("Registered player " + player.player_id, Color.blue);
-    }
     public void RegisterPlayer(Player player)
     {
-        player.player_id = players_registered;
         players[player.player_id] = player;
         ++players_registered;
 
@@ -191,7 +175,7 @@ public class GameManager : MonoBehaviour
 
         // Players
         if (num_players < 2) Debug.LogError("num_players must be > 1");
-        players = new Player[num_players];
+        players = new Dictionary<int, Player>();
 
         // Fleets
         fleets = new List<Fleet>();
@@ -397,12 +381,17 @@ public class GameManager : MonoBehaviour
             {
                 // Player command (flight start)
                 WorldState state = GetState(cmd.time);
-                Flight new_flight = ApplyCommand(state, cmd);
+                Flight new_flight = cmd.TryToApply(state, planets);
                 if (new_flight != null)
                 {
                     // Command is valid in current history
+                    cmd.valid = true;
                     flight_ends.Add(new_flight.end_time, new_flight);
                     SaveKeyState(state);
+                }
+                else
+                {
+                    cmd.valid = false;
                 }
                 next_cmd = next_cmd.Next;
             }
@@ -504,22 +493,6 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    private Flight ApplyCommand(WorldState state, PlayerCmd cmd)
-    {
-        int select_id = cmd.selected_planet_id;
-        int target_id = cmd.target_planet_id;
-        int n = state.planet_pops[select_id] / 2;
-
-        // Check command validity
-        if (!cmd.IsValid(state)) return null;
-
-        // Send ships on flight
-        state.planet_pops[select_id] -= n;
-
-        Flight flight = new Flight(state.planet_ownerIDs[select_id], n, planets[select_id], planets[target_id], cmd.time);
-        state.flights.Add(flight);
-        return flight;
-    }
 
     // Player Commands
     private void SaveCommand(PlayerCmd cmd)
@@ -618,6 +591,7 @@ public class WorldState
 }
 public class PlayerCmd
 {
+    public bool valid;
     public float time;
     public int player_id;
     public int selected_planet_id;
@@ -638,15 +612,25 @@ public class PlayerCmd
         this.player_id = player_id;
     }   
 
-    public bool IsValid(WorldState state)
+    public Flight TryToApply(WorldState state, Planet[] planets)
     {
         // Can't send ships from enemy planet
-        if (state.planet_ownerIDs[selected_planet_id] != player_id) return false;
+        if (state.planet_ownerIDs[selected_planet_id] != player_id) return null;
+
+        int ships = state.planet_pops[selected_planet_id] / 2;
 
         // Can't send less than 1 ship
-        if (state.planet_pops[selected_planet_id] / 2 < 1) return false;
+        if (ships < 1) return null;
 
-        return true;
+        // Create flight
+        Flight flight = new Flight(state.planet_ownerIDs[selected_planet_id],
+            ships, planets[selected_planet_id], planets[target_planet_id], time);
+
+        // Modify state
+        state.planet_pops[selected_planet_id] -= ships;
+        state.flights.Add(flight);
+
+        return flight;
     }
 }
 public class Flight

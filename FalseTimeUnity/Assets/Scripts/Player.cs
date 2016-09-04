@@ -5,7 +5,7 @@ using System.Collections;
 public class Player : NetworkBehaviour
 {
     // General
-    [SyncVar] public int player_id;
+    [SyncVar] public int player_id; // assume arbitrary numbers
     private bool initialized = false;
 
     // References
@@ -150,13 +150,13 @@ public class Player : NetworkBehaviour
         }
         else if (planet != selected_planet)
         {
-            if (power >= 1)
+            if (power >= req_power)
             {
                 // Issue player command 
                 CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID, planet.PlanetID, gm.GetTimeline().Time);
 
                 // Cost
-                SetPower(power - 1);
+                SetPower(power - req_power);
 
                 // UI
                 DeselectPlanet();

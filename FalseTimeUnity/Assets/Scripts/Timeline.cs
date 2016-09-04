@@ -112,7 +112,7 @@ public class Timeline : MonoBehaviour
 
             Color color = gm.player_colors[cmd.player_id];
 
-            if (cmd.IsValid(gm.GetState(cmd.time)))
+            if (cmd.valid)
             {
                 marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0);
             }

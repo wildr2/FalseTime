@@ -7,7 +7,7 @@ class CustomNetworkManager : NetworkManager
     public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId)
     {
         Player player = Instantiate(playerPrefab).GetComponent<Player>();
-        player.player_id = conn.connectionId; // currently only works with hosting, not seperate server
+        player.player_id = conn.connectionId;
 
         NetworkServer.AddPlayerForConnection(conn, player.gameObject, playerControllerId);
     }
