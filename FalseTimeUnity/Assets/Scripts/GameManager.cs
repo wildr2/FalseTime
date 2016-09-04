@@ -617,7 +617,7 @@ public class PlayerCmd
         // Can't send ships from enemy planet
         if (state.planet_ownerIDs[selected_planet_id] != player_id) return null;
 
-        int ships = state.planet_pops[selected_planet_id] / 2;
+        int ships = Mathf.CeilToInt(state.planet_pops[selected_planet_id] / 2f);
 
         // Can't send less than 1 ship
         if (ships < 1) return null;
