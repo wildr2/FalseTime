@@ -17,11 +17,9 @@ public class Timeline : MonoBehaviour
     // Interaction
     private bool paused = true;
 
-    // Length of the timeline in seconds
-    private float time_length = 120;
-
-    // Time in seconds
+    // Time
     public float Time { get; private set; }
+    private float time_length = 120;
 
     // Events
     public System.Action<float> on_time_set;
@@ -56,7 +54,6 @@ public class Timeline : MonoBehaviour
     {
         gm = FindObjectOfType<GameManager>();
         gm.on_history_change += OnHistoryChange;
-        gm.on_player_registered += (Player p) => UpdateScore();
         gm.on_win += OnWin;
 
         cam = Camera.main.GetComponent<CamController>();
@@ -94,14 +91,10 @@ public class Timeline : MonoBehaviour
         //SetTime(win_time);
         //SetMarkerPosition(knob, win_time);
         //UpdateClock();
-
-        win_text.transform.parent.gameObject.SetActive(true);
-        win_text.text = gm.player_names[winner].ToUpper() + " WINS";
     }
     private void OnHistoryChange()
     {
         UpdateHistoryMarkers();
-        UpdateScore();
     }
 
     /// <summary>
@@ -140,17 +133,6 @@ public class Timeline : MonoBehaviour
                 marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0.5f);
             }
         }
-    }
-    private void UpdateScore()
-    {
-        score_text.text = "";
-        foreach (Player player in gm.GetPlayers().Values)
-        {
-            score_text.text += Tools.ColorRichTxt(gm.GetPlayerScore(player).ToString(), gm.player_colors[player.player_id]);
-            score_text.text += " - ";
-        }
-        if (score_text.text.Length < 2) return;
-        score_text.text = score_text.text.Substring(0, score_text.text.Length - 2);
     }
     private void UpdateClock()
     {
