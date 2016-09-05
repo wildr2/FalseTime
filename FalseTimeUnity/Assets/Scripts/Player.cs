@@ -47,7 +47,7 @@ public class Player : NetworkBehaviour
     {
         gm = FindObjectOfType<GameManager>();
         StartCoroutine(Initialize());
-        gm.on_history_change += OnHistoryChange;
+        if (isLocalPlayer) gm.on_history_change += OnHistoryChange;
     }
 
     private IEnumerator Initialize()
@@ -56,7 +56,7 @@ public class Player : NetworkBehaviour
 
         if (isLocalPlayer)
         {
-            gm.GetTimeline().on_time_set += OnTimeSet;
+            gm.on_time_set += OnTimeSet;
 
             foreach (Planet planet in gm.GetPlanets())
             {
@@ -103,6 +103,12 @@ public class Player : NetworkBehaviour
                 }
             }
 
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                // Switch timeline
+                gm.SwitchTimeline();
+            }
+
             // Power Growth
             SetPower(Mathf.Min(power + 1f / power_bar_seconds * Time.deltaTime, max_power));
 
@@ -127,9 +133,9 @@ public class Player : NetworkBehaviour
     private void UpdateRequiredPower()
     {
         req_power = 1;
-        foreach (PlayerCmd cmd in gm.GetPlayerCmds())
+        foreach (PlayerCmd cmd in gm.CurrentTimeline.GetPlayerCmds())
         {
-            float closeness = Mathf.Pow(1f / (Mathf.Abs(cmd.time - gm.GetTimeline().Time) + 1), 4);
+            float closeness = Mathf.Pow(1f / (Mathf.Abs(cmd.time - gm.CurrentTimeline.Time) + 1), 4);
             req_power += closeness * 5f;
         }
     }
@@ -158,7 +164,8 @@ public class Player : NetworkBehaviour
             if (power >= req_power)
             {
                 // Issue player command 
-                CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID, planet.PlanetID, gm.GetTimeline().Time);
+                CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
+                    planet.PlanetID, gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
 
                 // Cost
                 SetPower(power - req_power);
@@ -205,7 +212,7 @@ public class Player : NetworkBehaviour
         }
             
     }
-    private void OnTimeSet(float time)
+    private void OnTimeSet(Timeline line)
     {
         if (!gm.IsGamePlaying()) return;
 
@@ -214,45 +221,45 @@ public class Player : NetworkBehaviour
         SetPower(power); // force ui update
 
         // Win condition
-        CmdCheckForWin(time);
+        CmdCheckForWin(line.LineID, line.Time);
     }
-    private void OnHistoryChange()
+    private void OnHistoryChange(Timeline line)
     {
         UpdateRequiredPower();
         SetPower(power); // force ui update
 
         // Win condition
-        CmdCheckForWin(gm.GetTimeline().Time);
+        CmdCheckForWin(gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
     }
 
     // Networking
     [Command]
-    private void CmdIssuePlayerCmd(int player_id, int selected_planet_id, int target_planet_id, float time)
+    private void CmdIssuePlayerCmd(int player_id, int selected_planet_id, int target_planet_id, int line, float time)
     {
-        RpcReceivePlayerCmd(player_id, selected_planet_id, target_planet_id, time);
+        RpcReceivePlayerCmd(player_id, selected_planet_id, target_planet_id, line, time);
     }
     [ClientRpc]
-    private void RpcReceivePlayerCmd(int player_id, int selected_planet_id, int target_planet_id, float time)
+    private void RpcReceivePlayerCmd(int player_id, int selected_planet_id, int target_planet_id, int line, float time)
     {
         PlayerCmd cmd = new PlayerCmd(time, selected_planet_id, target_planet_id, player_id);
-        gm.AddPlayerCmd(cmd);
+        gm.GetTimelines()[line].AddPlayerCmd(cmd);
     }
 
     [Command]
-    private void CmdCheckForWin(float time)
+    private void CmdCheckForWin(int line, float time)
     {
-        int winner = gm.GetWinner(); //gm.GetStateWinner(time);
+        int winner = gm.GetWinner(line, time); //gm.GetStateWinner(time);
         if (winner >= 0)
         {
             // Win
             Tools.Log("PLAYER " + winner + " WINS!");
-            RpcInformWin(winner, time);
+            RpcInformWin(winner, line, time);
         }
     }
     [ClientRpc]
-    private void RpcInformWin(int winner, float win_time)
+    private void RpcInformWin(int winner, int win_line, float win_time)
     {
-        gm.OnWin(winner, win_time);
+        gm.OnWin(winner, win_line, win_time);
 
         DeselectPlanet();
     }

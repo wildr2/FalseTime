@@ -8,12 +8,14 @@ public class GameManager : MonoBehaviour
     // Debug
     public bool debug_solo = false;
     public bool debug_powers = false;
-    public bool log_states = false;
 
     // General
     private bool initialized = false;
     private bool game_over = false;
     private int points_to_win = 5;
+
+    // Timelines
+    public Timeline CurrentTimeline { get; private set; }
 
     // Players
     public Color[] player_colors;
@@ -25,26 +27,22 @@ public class GameManager : MonoBehaviour
 
     // References
     public SeedManager seed_manager;
-    private Timeline timeline;
+    public Timeline[] timelines;
     public Transform connection_screen;
 
-    // History
-    private WorldState state_0;
-    private LinkedList<WorldState> key_states;
-    private LinkedList<PlayerCmd> player_cmds;
-
     // Planets
-    private Planet[] planets; // indexed by planet id
+    [System.NonSerialized] public Planet[] planets; // indexed by planet id
     public Planet planet_prefab;
 
     // Fleets
-    private List<Fleet> fleets;
+    [System.NonSerialized] public List<Fleet> fleets;
     public Fleet fleet_prefab;
 
     // Events
     public System.Action on_initialized;
     public System.Action<Player> on_player_registered;
-    public System.Action on_history_change;
+    public System.Action<Timeline> on_time_set;
+    public System.Action<Timeline> on_history_change;
     public System.Action<int, float> on_win;
 
 
@@ -67,14 +65,15 @@ public class GameManager : MonoBehaviour
         return ArePlayersRegistered() && !IsGameOver();
     }
     
-    public Timeline GetTimeline()
-    {
-        return timeline;
-    }
     public Planet[] GetPlanets()
     {
         return planets;
     }
+    public Timeline[] GetTimelines()
+    {
+        return timelines;
+    }
+
     public Player GetLocalPlayer()
     {
         foreach (Player p in players.Values)
@@ -82,14 +81,6 @@ public class GameManager : MonoBehaviour
             if (p.isLocalPlayer) return p;
         }
         return null;
-    }
-    public LinkedList<WorldState> GetKeyStates()
-    {
-        return key_states;
-    }
-    public LinkedList<PlayerCmd> GetPlayerCmds()
-    {
-        return player_cmds;
     }
     public Dictionary<int, Player> GetPlayers()
     {
@@ -99,59 +90,18 @@ public class GameManager : MonoBehaviour
     {
         return player_scores[player.player_id];
     }
-
-    public WorldState GetState(float time)
+    public int GetWinner(int line, float time)
     {
-        WorldState recent = GetMostRecentKeyState(time).Value;
-        WorldState newstate = new WorldState(recent);
-        newstate.time = time;
-
-        // Interpolate
-        float time_since = time - recent.time;
-
-        for (int i = 0; i < planets.Length; ++i)
-        {
-            int growth = Mathf.FloorToInt(planets[i].GetPopPerSecond(newstate.planet_ownerIDs[i]) * time_since);
-            newstate.planet_pops[i] += growth;
-        }
-
-        return newstate;
-    }
-    public int GetStateWinner(float time)
-    {
-        WorldState state = GetState(time);
-        HashSet<int> alive_players = new HashSet<int>();
-
-        for (int i = 0; i < planets.Length; ++i)
-        {
-            if (state.planet_ownerIDs[i] >= 0)
-                alive_players.Add(state.planet_ownerIDs[i]);
-        }
-
-        if (alive_players.Count == 1)
-        {
-            // Only one player alive - the winner
-            foreach (int i in alive_players)
-                return i; // HACKY
-
-            return alive_players.GetEnumerator().Current;
-        }
-
-        // No winner
-        return -1;
-    }
-    public int GetWinner()
-    {
+        // Win by having high enough score
         foreach (int player_id in players.Keys)
         {
             if (player_scores[player_id] >= points_to_win)
                 return player_id;
         }
 
-        // No winner
-        return -1;
+        // Win by clearing enemy at some line / time
+        return timelines[line].GetStateWinner(time);
     }
-
 
 
     // PUBLIC MODIFIERS
@@ -167,16 +117,25 @@ public class GameManager : MonoBehaviour
 
         Tools.Log("Registered player " + player.player_id, Color.blue);
     }
-    public void AddPlayerCmd(PlayerCmd cmd)
+    public void GivePoint(int player_id)
     {
-        SaveCommand(cmd);
-        RemakeKeyStates();
-        LoadState(GetState(timeline.Time));
+        player_scores[player_id] += 1;
     }
-    public void OnWin(int winner, float win_time)
+    public void OnWin(int winner, int win_line, float win_time)
     {
         game_over = true;
+
+        CurrentTimeline = timelines[win_line];
+        CurrentTimeline.SetTime(win_time);
+
         if (on_win != null) on_win(winner, win_time);
+    }
+    public void SwitchTimeline()
+    {
+        int i = CurrentTimeline.LineID;
+        i = (i + 1) % timelines.Length;
+        CurrentTimeline = timelines[i];
+        CurrentTimeline.SetTime(CurrentTimeline.Time);
     }
 
 
@@ -187,7 +146,6 @@ public class GameManager : MonoBehaviour
         // Debug options
         if (!Debug.isDebugBuild)
         {
-            log_states = false;
             debug_solo = false;
             debug_powers = false;
         }
@@ -199,16 +157,6 @@ public class GameManager : MonoBehaviour
 
         // Fleets
         fleets = new List<Fleet>();
-
-        // Player commands
-        player_cmds = new LinkedList<PlayerCmd>();
-
-        // Timeline
-        timeline = FindObjectOfType<Timeline>();
-        timeline.on_time_set += OnTimeSet;
-
-        // Key states
-        key_states = new LinkedList<WorldState>();
 
         // World generation
         StartCoroutine(GenerateWorld());
@@ -223,9 +171,15 @@ public class GameManager : MonoBehaviour
         Random.seed = seed_manager.seed;
         GeneratePlanets();
 
-        // Create initial history
-        state_0 = new WorldState(0, planets);
-        RemakeKeyStates();
+        // Timelines
+        for (int i = 0; i < timelines.Length; ++i)
+        {
+            timelines[i].Initialize(i);
+            timelines[i].on_time_set += OnTimeSet;
+            timelines[i].on_history_change += OnHistoryChange;
+        }
+        CurrentTimeline = timelines[0];
+        CurrentTimeline.SetTime(0);
 
         // Done
         initialized = true;
@@ -318,265 +272,17 @@ public class GameManager : MonoBehaviour
         return list;
     }
 
-    // General World State
-    private void LoadState(WorldState state)
-    {
-        // Update planets
-        for (int i = 0; i < planets.Length; ++i)
-        {
-            planets[i].SetPop(state.planet_pops[i], state.planet_ownerIDs[i]);
-        }
-
-        // Destroy existing fleets
-        foreach (Fleet fleet in fleets)
-        {
-            Destroy(fleet.gameObject);
-        }
-        fleets.Clear();
-
-        // Add new fleets
-        foreach (Flight flight in state.flights)
-        {
-            Fleet fleet = Instantiate(fleet_prefab);
-            fleet.Initialize(flight.owner_id, flight.ships, player_colors[flight.owner_id]);
-            fleet.SetPosition(planets[flight.start_planet_id], planets[flight.end_planet_id], flight.GetProgress(state.time));
-            fleets.Add(fleet);
-        }
-
-        // Have server check win condition
-    }
-
-    // Key States
-    private void SaveKeyState(WorldState state)
-    {
-        LinkedListNode<WorldState> recent = GetMostRecentKeyState(state.time);
-
-        if (recent == null)
-        {
-            // Add earliest state
-            key_states.AddFirst(state);
-        }
-        else if (recent.Value.time == state.time)
-        {
-            // Replace existing state
-            recent.Value = state;
-        }
-        else
-        {
-            // Add new state
-            key_states.AddAfter(recent, state);
-        }
-    }
-    private LinkedListNode<WorldState> GetMostRecentKeyState(float time)
-    {
-        if (key_states.Count == 0) return null;
-
-        // Find most recent (to time) state
-        LinkedListNode<WorldState> node = key_states.Last;
-        while (node != null && node.Value.time > time)
-        {
-            node = node.Previous;
-        }
-        return node;
-    }
-    private void RemakeKeyStates()
-    {
-        // Delete old key states
-        key_states.Clear();
-
-        // Add back time 0 state
-        SaveKeyState(state_0);
-
-        // Create other key states
-        SortedList<float, Pair<PlayerCmd, Flight>> flight_ends = new SortedList<float, Pair<PlayerCmd, Flight>>(new DuplicateKeyComparer<float>());
-        LinkedListNode<PlayerCmd> next_cmd = player_cmds.First;
-
-        while (true)
-        {
-            Flight f = flight_ends.Count > 0 ? flight_ends.Values[0].Second : null;
-            PlayerCmd cmd = next_cmd == null ? null : next_cmd.Value;
-            if (f == null && cmd == null) break;
-
-            if (f == null || (cmd != null && cmd.time < f.end_time))
-            {
-                // Player command (flight start)
-                WorldState state = GetState(cmd.time);
-                Flight new_flight = cmd.TryToApply(state, planets);
-                if (new_flight != null)
-                {
-                    // Command is valid in current history
-                    cmd.valid = true;
-                    flight_ends.Add(new_flight.end_time, new Pair<PlayerCmd, Flight>(cmd, new_flight));
-                    SaveKeyState(state);
-                }
-                else
-                {
-                    cmd.valid = false;
-                }
-                next_cmd = next_cmd.Next;
-            }
-            else if (f.end_time <= timeline.GetEndTime())
-            {
-                // Flight end
-                WorldState state = GetState(f.end_time);
-                bool scored = false;
-                ApplyFlightEnd(state, f, out scored);
-                SaveKeyState(state);
-
-                PlayerCmd flight_end_cmd = flight_ends.Values[0].First;
-                if (scored && !flight_end_cmd.scored)
-                {
-                    player_scores[flight_end_cmd.player_id] += 1;
-                    flight_end_cmd.scored = true;
-                }
-
-                flight_ends.RemoveAt(0);
-            }
-        }
-
-        if (on_history_change != null) on_history_change();
-
-        if (log_states) LogStates();
-    }
-    private void RemakeKeyStates2()
-    {
-        // Create flight events
-        SortedList<float, Flight> flight_events = new SortedList<float, Flight>();
-
-        foreach (PlayerCmd cmd in player_cmds)
-        {
-            WorldState state = GetState(cmd.time);
-            int n = state.planet_pops[cmd.selected_planet_id] / 2;
-
-            Flight flight = new Flight(
-                planets[cmd.selected_planet_id].OwnerID,
-                n,
-                planets[cmd.selected_planet_id],
-                planets[cmd.target_planet_id], cmd.time);
-
-            flight_events.Add(flight.start_time, flight);
-            flight_events.Add(flight.end_time, flight);
-        }
-
-        // Save key states for flight events
-        foreach (KeyValuePair<float, Flight> fe in flight_events)
-        {
-            float time = fe.Key;
-            Flight f = fe.Value;
-
-            if (time == f.start_time)
-            {
-                // Flight start
-                WorldState state = GetState(time);
-                state.planet_pops[f.start_planet_id] -= f.ships;
-                SaveKeyState(state);
-            }
-            else
-            {
-                // Flight end
-                WorldState state = GetState(time);
-                state.flights.Remove(f);
-
-                if (f.owner_id == state.planet_ownerIDs[f.end_planet_id])
-                {
-                    // Transfer
-                    state.planet_pops[f.end_planet_id] += f.ships;
-                }
-                else
-                {
-                    // Attack
-                    int new_pop = state.planet_pops[f.end_planet_id] - f.ships;
-                    if (new_pop >= 0) state.planet_pops[f.end_planet_id] = new_pop;
-                    else
-                    {
-                        // Allegiance change
-                        state.planet_pops[f.end_planet_id] = -new_pop;
-                        state.planet_ownerIDs[f.end_planet_id] = f.owner_id;
-                    }
-                }
-
-                SaveKeyState(state);
-            }
-        }
-    } // NOT USED
-    private void ApplyFlightEnd(WorldState state, Flight flight, out bool scored)
-    {
-        scored = false;
-        state.flights.Remove(flight);
-
-        if (flight.owner_id == state.planet_ownerIDs[flight.end_planet_id])
-        {
-            // Transfer
-            state.planet_pops[flight.end_planet_id] += flight.ships;
-        }
-        else
-        {
-            // Attack
-            int new_pop = state.planet_pops[flight.end_planet_id] - flight.ships;
-            if (new_pop >= 0) state.planet_pops[flight.end_planet_id] = new_pop;
-            else
-            {
-                // Allegiance change
-                if (state.planet_ownerIDs[flight.end_planet_id] != -1) scored = true;
-                state.planet_pops[flight.end_planet_id] = -new_pop;
-                state.planet_ownerIDs[flight.end_planet_id] = flight.owner_id;
-            }
-        }
-    }
-
-    // Player Commands
-    private void SaveCommand(PlayerCmd cmd)
-    {
-        LinkedListNode<PlayerCmd> recent = GetMostRecentCmd(cmd.time);
-
-        if (recent == null)
-        {
-            // Add earliest command
-            player_cmds.AddFirst(cmd);
-        }
-        else
-        {
-            // Add new command
-            player_cmds.AddAfter(recent, cmd);
-        }
-    }
-    private LinkedListNode<PlayerCmd> GetMostRecentCmd(float time)
-    {
-        if (player_cmds.Count == 0) return null;
-
-        // Find most recent (to time) command
-        LinkedListNode<PlayerCmd> node = player_cmds.Last;
-        while (node != null && node.Value.time > time)
-        {
-            node = node.Previous;
-        }
-        return node;
-    }
-
     // Events
-    private void OnTimeSet(float time)
+    private void OnTimeSet(Timeline line)
     {
-        LoadState(GetState(time));
+        CurrentTimeline = line;
+        if (on_time_set != null) on_time_set(line);
+    }
+    private void OnHistoryChange(Timeline line)
+    {
+        if (on_history_change != null) on_history_change(line);
     }
 
-    // Debug
-    private void LogStates()
-    {
-        foreach (WorldState state in key_states)
-        {
-            string s = "STATE " + state.time + "\n";
-            for (int i = 0; i < state.planet_pops.Length; ++i)
-            {
-                s += "Planet " + i + "(" + state.planet_ownerIDs[i] + "): " + state.planet_pops[i] + "\n";
-            }
-            for (int i = 0; i < state.flights.Count; ++i)
-            {
-                s += "Flight " + "\n";
-            }
-            s += "\n";
-            Tools.Log(s);
-        }
-    }
 }
 
 public class WorldState
