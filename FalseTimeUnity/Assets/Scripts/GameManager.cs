@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     // General
     private bool initialized = false;
     private bool game_over = false;
-    public Transform connection_screen;
+    private int points_to_win = 5;
 
     // Players
     public Color[] player_colors;
@@ -22,10 +22,12 @@ public class GameManager : MonoBehaviour
     public int num_players = 2;
     private int players_registered = 0;
     public Dictionary<int, Player> players; // keys are player ids
+    private Dictionary<int, int> player_scores;
 
     // References
     public SeedManager seed_manager;
     private Timeline timeline;
+    public Transform connection_screen;
 
     // History
     private WorldState state_0;
@@ -55,7 +57,7 @@ public class GameManager : MonoBehaviour
     }
     public bool ArePlayersRegistered()
     {
-        return players_registered == num_players || (debug_solo && players_registered == 1);
+        return players_registered == num_players;
     }
     public bool IsGameOver()
     {
@@ -89,6 +91,14 @@ public class GameManager : MonoBehaviour
     public LinkedList<PlayerCmd> GetPlayerCmds()
     {
         return player_cmds;
+    }
+    public Dictionary<int, Player> GetPlayers()
+    {
+        return players;
+    }
+    public int GetPlayerScore(Player player)
+    {
+        return player_scores[player.player_id];
     }
 
     public WorldState GetState(float time)
@@ -131,8 +141,17 @@ public class GameManager : MonoBehaviour
         // No winner
         return -1;
     }
+    public int GetWinner()
+    {
+        foreach (int player_id in players.Keys)
+        {
+            if (player_scores[player_id] >= points_to_win)
+                return player_id;
+        }
 
-    
+        // No winner
+        return -1;
+    }
 
 
 
@@ -141,6 +160,7 @@ public class GameManager : MonoBehaviour
     public void RegisterPlayer(Player player)
     {
         players[player.player_id] = player;
+        player_scores[player.player_id] = 0;
         ++players_registered;
 
         if (on_player_registered != null) on_player_registered(player);
@@ -176,6 +196,7 @@ public class GameManager : MonoBehaviour
         // Players
         if (num_players < 2) Debug.LogError("num_players must be > 1");
         players = new Dictionary<int, Player>();
+        player_scores = new Dictionary<int, int>();
 
         // Fleets
         fleets = new List<Fleet>();
@@ -368,12 +389,12 @@ public class GameManager : MonoBehaviour
         SaveKeyState(state_0);
 
         // Create other key states
-        SortedList<float, Flight> flight_ends = new SortedList<float, Flight>(new DuplicateKeyComparer<float>());
+        SortedList<float, Pair<PlayerCmd, Flight>> flight_ends = new SortedList<float, Pair<PlayerCmd, Flight>>(new DuplicateKeyComparer<float>());
         LinkedListNode<PlayerCmd> next_cmd = player_cmds.First;
 
         while (true)
         {
-            Flight f = flight_ends.Count > 0 ? flight_ends.Values[0] : null;
+            Flight f = flight_ends.Count > 0 ? flight_ends.Values[0].Second : null;
             PlayerCmd cmd = next_cmd == null ? null : next_cmd.Value;
             if (f == null && cmd == null) break;
 
@@ -386,7 +407,7 @@ public class GameManager : MonoBehaviour
                 {
                     // Command is valid in current history
                     cmd.valid = true;
-                    flight_ends.Add(new_flight.end_time, new_flight);
+                    flight_ends.Add(new_flight.end_time, new Pair<PlayerCmd, Flight>(cmd, new_flight));
                     SaveKeyState(state);
                 }
                 else
@@ -395,12 +416,20 @@ public class GameManager : MonoBehaviour
                 }
                 next_cmd = next_cmd.Next;
             }
-            else
+            else if (f.end_time <= timeline.GetEndTime())
             {
                 // Flight end
                 WorldState state = GetState(f.end_time);
-                ApplyFlightEnd(state, f);
+                bool scored = false;
+                ApplyFlightEnd(state, f, out scored);
                 SaveKeyState(state);
+
+                PlayerCmd flight_end_cmd = flight_ends.Values[0].First;
+                if (scored && !flight_end_cmd.scored)
+                {
+                    player_scores[flight_end_cmd.player_id] += 1;
+                    flight_end_cmd.scored = true;
+                }
 
                 flight_ends.RemoveAt(0);
             }
@@ -471,8 +500,9 @@ public class GameManager : MonoBehaviour
             }
         }
     } // NOT USED
-    private void ApplyFlightEnd(WorldState state, Flight flight)
+    private void ApplyFlightEnd(WorldState state, Flight flight, out bool scored)
     {
+        scored = false;
         state.flights.Remove(flight);
 
         if (flight.owner_id == state.planet_ownerIDs[flight.end_planet_id])
@@ -488,6 +518,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 // Allegiance change
+                if (state.planet_ownerIDs[flight.end_planet_id] != -1) scored = true;
                 state.planet_pops[flight.end_planet_id] = -new_pop;
                 state.planet_ownerIDs[flight.end_planet_id] = flight.owner_id;
             }
@@ -591,6 +622,7 @@ public class WorldState
 }
 public class PlayerCmd
 {
+    public bool scored = false;
     public bool valid;
     public float time;
     public int player_id;

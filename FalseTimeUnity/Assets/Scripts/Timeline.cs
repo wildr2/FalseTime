@@ -12,7 +12,7 @@ public class Timeline : MonoBehaviour
     public RectTransform cmds_parent;
     public RectTransform line, knob, marker_prefab;
     private bool pointer_down;
-    public Text clock, win_text;
+    public Text clock, win_text, score_text;
 
     // Interaction
     private bool paused = true;
@@ -28,6 +28,16 @@ public class Timeline : MonoBehaviour
 
 
 
+    // PUBLIC ACCESSORS
+
+    public float GetEndTime()
+    {
+        return time_length;
+    }
+
+
+    // PUBLIC MODIFIERS
+
     public void OnPointerDown()
     {
         pointer_down = true;
@@ -39,20 +49,14 @@ public class Timeline : MonoBehaviour
         if (cam != null) cam.EnableTranslation(true);
     }
 
-    private void OnWin(int winner, float win_time)
-    {
-        SetTime(win_time);
-        SetMarkerPosition(knob, win_time);
-        UpdateClock();
-
-        win_text.transform.parent.gameObject.SetActive(true);
-        win_text.text = gm.player_names[winner].ToUpper() + " WINS";
-    }
+    
+    // PRIVATE MODIFIERS
 
     private void Awake()
     {
         gm = FindObjectOfType<GameManager>();
-        gm.on_history_change += ReMakeHistoryMarkers;
+        gm.on_history_change += OnHistoryChange;
+        gm.on_player_registered += (Player p) => UpdateScore();
         gm.on_win += OnWin;
 
         cam = Camera.main.GetComponent<CamController>();
@@ -84,7 +88,22 @@ public class Timeline : MonoBehaviour
             SetMarkerPosition(knob, Time);
         }
     }
-    
+
+    private void OnWin(int winner, float win_time)
+    {
+        //SetTime(win_time);
+        //SetMarkerPosition(knob, win_time);
+        //UpdateClock();
+
+        win_text.transform.parent.gameObject.SetActive(true);
+        win_text.text = gm.player_names[winner].ToUpper() + " WINS";
+    }
+    private void OnHistoryChange()
+    {
+        UpdateHistoryMarkers();
+        UpdateScore();
+    }
+
     /// <summary>
     /// Pos from 0 to 1
     /// </summary>
@@ -97,7 +116,7 @@ public class Timeline : MonoBehaviour
 
         UpdateClock();
     }
-    private void ReMakeHistoryMarkers()
+    private void UpdateHistoryMarkers()
     {
         // Delete old markers
         Tools.DestroyChildren(cmds_parent);
@@ -122,11 +141,22 @@ public class Timeline : MonoBehaviour
             }
         }
     }
-
+    private void UpdateScore()
+    {
+        score_text.text = "";
+        foreach (Player player in gm.GetPlayers().Values)
+        {
+            score_text.text += Tools.ColorRichTxt(gm.GetPlayerScore(player).ToString(), gm.player_colors[player.player_id]);
+            score_text.text += " - ";
+        }
+        if (score_text.text.Length < 2) return;
+        score_text.text = score_text.text.Substring(0, score_text.text.Length - 2);
+    }
     private void UpdateClock()
     {
         clock.text = Tools.FormatTimeAsMinSec(Time);
     }
+
     private void SetMarkerPosition(RectTransform marker, float time)
     {
         float x = Mathf.Lerp(0, line.rect.width, time / time_length);

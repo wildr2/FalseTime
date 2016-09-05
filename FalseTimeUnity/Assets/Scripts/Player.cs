@@ -68,9 +68,14 @@ public class Player : NetworkBehaviour
             StartCoroutine(HumanUpdate());
         }
 
-
         gm.RegisterPlayer(this);
-
+        if (gm.debug_solo)
+        {
+            ++player_id;
+            gm.RegisterPlayer(this);
+            --player_id;
+        }
+        
         SetPower(0);
 
         initialized = true;
@@ -215,6 +220,9 @@ public class Player : NetworkBehaviour
     {
         UpdateRequiredPower();
         SetPower(power); // force ui update
+
+        // Win condition
+        CmdCheckForWin(gm.GetTimeline().Time);
     }
 
     // Networking
@@ -233,7 +241,7 @@ public class Player : NetworkBehaviour
     [Command]
     private void CmdCheckForWin(float time)
     {
-        int winner = gm.GetStateWinner(time);
+        int winner = gm.GetWinner(); //gm.GetStateWinner(time);
         if (winner >= 0)
         {
             // Win
