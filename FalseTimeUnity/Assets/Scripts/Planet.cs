@@ -9,6 +9,7 @@ public class Planet : MonoBehaviour
     public Color neutral_color;
 
     private Text text;
+    public Image raycast_image;
     public SpriteRenderer sprite_sr;
     public SpriteRenderer highlight_sr;
 
@@ -42,7 +43,8 @@ public class Planet : MonoBehaviour
         Radius = size / 2.5f;
         sprite_sr.transform.localScale = Vector3.one * Radius * 2f;
         highlight_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
-
+        raycast_image.transform.localScale = Vector3.one * Radius * 2f;
+            
         // Pop
         SetPop(pop, ownerID);
     }
