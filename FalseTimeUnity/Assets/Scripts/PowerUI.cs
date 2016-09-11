@@ -17,7 +17,7 @@ public class PowerUI : MonoBehaviour
     }
     private void OnPlayerRegistered(Player player)
     {
-        if (player.isLocalPlayer)
+        if (player.isLocalPlayer && !player.ai_controlled)
         {
             player.on_power_change += OnPowerChange;
             this.player = player;
