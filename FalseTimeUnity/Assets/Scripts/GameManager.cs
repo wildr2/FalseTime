@@ -21,6 +21,8 @@ public class GameManager : MonoBehaviour
     public Color[] player_colors;
     public string[] player_names;
     public int num_players = 2;
+    public int num_bots = 2;
+
     private int players_registered = 0;
     public Dictionary<int, Player> players; // keys are player ids
     private Dictionary<int, int> player_scores;
@@ -33,6 +35,7 @@ public class GameManager : MonoBehaviour
     // Planets
     [System.NonSerialized] public Planet[] planets; // indexed by planet id
     public Planet planet_prefab;
+    [System.NonSerialized] public float[][] planet_dists;
 
     // Fleets
     [System.NonSerialized] public List<Fleet> fleets;
@@ -117,7 +120,8 @@ public class GameManager : MonoBehaviour
         if (on_player_registered != null) on_player_registered(player);
         if (ArePlayersRegistered()) connection_screen.gameObject.SetActive(false);
 
-        Tools.Log("Registered player " + player.player_id, Color.blue);
+        Tools.Log("Registered player " + player.player_id 
+            + (player.ai_controlled ? " (AI)" : ""), Color.blue);
     }
     public void GivePoint(int player_id)
     {
@@ -172,6 +176,19 @@ public class GameManager : MonoBehaviour
         // Generate Planets
         Random.seed = seed_manager.seed;
         GeneratePlanets();
+
+        // Store planet distances
+        planet_dists = new float[planets.Length][];
+        for (int i = 0; i < planets.Length; ++i)
+        {
+            planet_dists[i] = new float[planets.Length];
+            for (int j = 0; j < planets.Length; ++j)
+            {
+                if (i == j) continue;
+                planet_dists[i][j] = Vector2.Distance(planets[i].transform.position, planets[j].transform.position)
+                    - planets[i].Radius - planets[j].Radius;
+            }
+        }
 
         // Timelines
         for (int i = 0; i < timelines.Length; ++i)
