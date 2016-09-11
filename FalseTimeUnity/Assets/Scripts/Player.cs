@@ -150,7 +150,7 @@ public class Player : NetworkBehaviour
                             float score = 0;
 
                             // Current time
-                            score -= (time / line.GetEndTime()) * 2f;
+                            score -= (time / line.GetEndTime()) * 1f;
 
                             // Command cost
                             score -= req_power;
@@ -158,11 +158,11 @@ public class Player : NetworkBehaviour
                             // Taking enemy planet
                             if (projected_state.planet_ownerIDs[j] != -1) score += 30;
 
-                            //// Units remaining on target planet
-                            //score += (ships_to_send - projected_state.planet_pops[j]) * 0.25f;
+                            // Units remaining on target planet
+                            //score += (ships_to_send + projected_state.planet_pops[j]) * 0.15f;
 
-                            //// Units remaining on selected planet
-                            //score += (state.planet_pops[i] - ships_to_send) * 0.25f;
+                            // Units remaining on selected planet
+                            //score += (state.planet_pops[i] - ships_to_send) * 0.15f;
 
                             // Target planet size
                             score += gm.planets[j].Size * 5f;
@@ -189,7 +189,7 @@ public class Player : NetworkBehaviour
             //Tools.Log("here");
             if (best_cmd != null)
             {
-                Tools.Log("p" + player_id + " Command");
+                //Tools.Log("p" + player_id + " Command");
 
                 // Do best action
                 CmdIssuePlayerCmd(player_id, best_cmd.selected_planet_id, best_cmd.target_planet_id,
@@ -199,7 +199,7 @@ public class Player : NetworkBehaviour
                 SetPower(power - req_power);
             }
 
-            yield return null;
+            yield return new WaitForSeconds(Random.Range(0, 5));
         }
     }
     private void Update()

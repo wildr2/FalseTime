@@ -346,6 +346,7 @@ public class WorldState
 }
 public class PlayerCmd
 {
+    public int cmd_id;
     public bool scored = false;
     public bool valid;
     public float time;

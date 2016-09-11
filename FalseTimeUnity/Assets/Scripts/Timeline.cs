@@ -33,6 +33,9 @@ public class Timeline : MonoBehaviour
     private WorldState state_0;
     private LinkedList<WorldState> key_states;
     private LinkedList<PlayerCmd> player_cmds;
+    private int latest_cmd_id = -1;
+    private int last_drawn_cmd_id = -1;
+    private float latest_cmd_time;
 
     // Events
     public System.Action<Timeline> on_time_set;
@@ -84,6 +87,10 @@ public class Timeline : MonoBehaviour
 
         // No winner
         return -1;
+    }
+    public float GetLatestCmdTime()
+    {
+        return latest_cmd_time;
     }
 
     public LinkedList<WorldState> GetKeyStates()
@@ -147,6 +154,8 @@ public class Timeline : MonoBehaviour
 
     public void AddPlayerCmd(PlayerCmd cmd)
     {
+        cmd.cmd_id = ++latest_cmd_id;
+        latest_cmd_time = cmd.time;
         SaveCommand(cmd);
         RemakeKeyStates();
         LoadState(GetState(Time));
@@ -397,8 +406,9 @@ public class Timeline : MonoBehaviour
             else
             {
                 // Allegiance change
+                new_pop = state.planet_pops[flight.end_planet_id] + flight.ships;
                 if (state.planet_ownerIDs[flight.end_planet_id] != -1) scored = true;
-                state.planet_pops[flight.end_planet_id] = -new_pop;
+                state.planet_pops[flight.end_planet_id] = new_pop;
                 state.planet_ownerIDs[flight.end_planet_id] = flight.owner_id;
             }
         }
@@ -467,12 +477,27 @@ public class Timeline : MonoBehaviour
         Tools.DestroyChildren(cmds_parent);
 
         // Commands
+        float prev_marker_time = -1;
         foreach (PlayerCmd cmd in GetPlayerCmds())
         {
+            float marker_time = cmd.time;
+            if (marker_time - prev_marker_time < 0.1f)
+            {
+                marker_time = prev_marker_time + 0.1f;
+            }
+            prev_marker_time = marker_time;
+
             RectTransform marker = Instantiate(marker_prefab);
             marker.SetParent(cmds_parent, false);
-            SetMarkerPosition(marker, cmd.time);
-            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, line.rect.height * );
+            SetMarkerPosition(marker, marker_time);
+            marker.localScale = new Vector3(1, 1, 1);
+
+            // new cmd
+            if (cmd.cmd_id > last_drawn_cmd_id)
+            {
+                last_drawn_cmd_id = Mathf.Max(cmd.cmd_id, last_drawn_cmd_id);
+                StartCoroutine(FlashMarker(marker));
+            }
 
             Color color = gm.player_colors[cmd.player_id];
 
@@ -489,6 +514,28 @@ public class Timeline : MonoBehaviour
     private void UpdateClock()
     {
         clock.text = Tools.FormatTimeAsMinSec(Time);
+    }
+    private IEnumerator FlashMarker(RectTransform marker)
+    {
+        // Shrink
+        for (float t = 0; t < 1; t += UnityEngine.Time.deltaTime * 2f)
+        {
+            if (marker == null) break;
+            float w = Mathf.Lerp(50, 1, 1-Mathf.Pow(1-t, 2));
+            marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
+            
+            yield return null;
+        }
+
+        // Flash
+        Image img = marker.GetComponent<Image>();
+        Color color = img.color;
+        for (int i = 0; i < 16; ++i)
+        {
+            if (marker == null) break;
+            img.color = i % 2 == 0 ? Color.white : color;
+            yield return new WaitForSeconds(0.25f);
+        }
     }
 
     // Debug
