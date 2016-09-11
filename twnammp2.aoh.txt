@@ -1,0 +1,13 @@
+﻿
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	modified:   FalseTimeUnity/Assets/Scripts/GameManager.cs
+#	modified:   FalseTimeUnity/Assets/Scripts/Player.cs
+#	modified:   FalseTimeUnity/Builds/build_Data/Managed/Assembly-CSharp.dll
+#	new file:   FalseTimeUnity/Builds/build_Data/output_log.txt
+#
+

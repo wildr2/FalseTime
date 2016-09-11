@@ -12,7 +12,7 @@ public class GameManager : MonoBehaviour
     // General
     private bool initialized = false;
     private bool game_over = false;
-    private int points_to_win = 5;
+    private int points_to_win = 10;
 
     // Timelines
     public Timeline CurrentTimeline { get; private set; }
@@ -100,7 +100,9 @@ public class GameManager : MonoBehaviour
         }
 
         // Win by clearing enemy at some line / time
-        return timelines[line].GetStateWinner(time);
+        //return timelines[line].GetStateWinner(time);
+
+        return -1;
     }
 
 

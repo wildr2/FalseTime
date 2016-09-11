@@ -135,8 +135,11 @@ public class Player : NetworkBehaviour
         req_power = 1;
         foreach (PlayerCmd cmd in gm.CurrentTimeline.GetPlayerCmds())
         {
-            float closeness = Mathf.Pow(1f / (Mathf.Abs(cmd.time - gm.CurrentTimeline.Time) + 1), 4);
-            req_power += closeness * 5f;
+            if (cmd.player_id == player_id)
+            {
+                float closeness = Mathf.Pow(1f / (Mathf.Abs(cmd.time - gm.CurrentTimeline.Time) + 1), 4);
+                req_power += closeness * 5f;
+            }
         }
     }
 
