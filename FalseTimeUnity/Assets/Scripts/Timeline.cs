@@ -158,7 +158,7 @@ public class Timeline : MonoBehaviour
         latest_cmd_time = cmd.time;
         SaveCommand(cmd);
         RemakeKeyStates();
-        LoadState(GetState(Time));
+        if (gm.CurrentTimeline == this) LoadState(GetState(Time));
     }
 
 
@@ -229,8 +229,6 @@ public class Timeline : MonoBehaviour
             fleet.SetPosition(gm.planets[flight.start_planet_id], gm.planets[flight.end_planet_id], flight.GetProgress(state.time));
             gm.fleets.Add(fleet);
         }
-
-        // Have server check win condition
     }
 
     // Key States
@@ -302,20 +300,23 @@ public class Timeline : MonoBehaviour
                 }
                 next_cmd = next_cmd.Next;
             }
-            else if (f.end_time <= GetEndTime())
+            else
             {
                 // Flight end
-                WorldState state = GetState(f.end_time);
-                bool scored = false;
-                ApplyFlightEnd(state, f, out scored);
-                SaveKeyState(state);
-
-                PlayerCmd flight_end_cmd = flight_ends.Values[0].First;
-                if (scored && !flight_end_cmd.scored)
+                if (f.end_time <= GetEndTime())
                 {
-                    gm.GivePoint(flight_end_cmd.player_id);
-                    flight_end_cmd.scored = true;
-                    flight_end_cmd.score_time = f.end_time;
+                    WorldState state = GetState(f.end_time);
+                    bool scored = false;
+                    ApplyFlightEnd(state, f, out scored);
+                    SaveKeyState(state);
+
+                    PlayerCmd flight_end_cmd = flight_ends.Values[0].First;
+                    if (scored && !flight_end_cmd.scored)
+                    {
+                        gm.GivePoint(flight_end_cmd.player_id);
+                        flight_end_cmd.scored = true;
+                        flight_end_cmd.score_time = f.end_time;
+                    }
                 }
 
                 flight_ends.RemoveAt(0);

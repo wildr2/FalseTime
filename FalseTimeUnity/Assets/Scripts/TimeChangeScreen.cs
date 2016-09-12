@@ -34,7 +34,8 @@ public class TimeChangeScreen : MonoBehaviour
 
     private void OnHistoryChange(Timeline line)
     {
-        if (gm.CurrentTimeline == line && line.Time >= line.GetLatestCmdTime())
+        // only flash if more than 0.1 seconds ahead of change
+        if (gm.CurrentTimeline == line && line.Time > line.GetLatestCmdTime() + 0.1f)
         {
             // Start flash
             flash_line = line;

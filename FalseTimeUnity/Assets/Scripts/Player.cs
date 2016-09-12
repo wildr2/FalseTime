@@ -144,13 +144,13 @@ public class Player : NetworkBehaviour
                             int ships_to_send = Mathf.CeilToInt(state.planet_pops[i] / 2f);
 
                             if (projected_state.planet_ownerIDs[j] == player_id) continue; // skip transfers
-                            if (ships_to_send < projected_state.planet_pops[j] + 1) continue; // skip non takeovers
+                            if (ships_to_send < projected_state.planet_pops[j] + 2) continue; // skip non takeovers
                             
 
                             float score = 0;
 
                             // Current time
-                            score -= (time / line.GetEndTime()) * 1f;
+                            if (player_id == 0) score -= (time / line.GetEndTime()) * 1f;
 
                             // Command cost
                             score -= req_power;
