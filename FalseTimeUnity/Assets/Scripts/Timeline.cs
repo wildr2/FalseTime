@@ -20,7 +20,7 @@ public class Timeline : MonoBehaviour
     public RectTransform cmds_parent;
     public RectTransform line, knob, marker_prefab;
     private bool pointer_down;
-    public Text clock, win_text, score_text;
+    public Text clock, win_text, score_text, score_marker_prefab;
 
     // Interaction
     private bool paused = true;
@@ -315,6 +315,7 @@ public class Timeline : MonoBehaviour
                 {
                     gm.GivePoint(flight_end_cmd.player_id);
                     flight_end_cmd.scored = true;
+                    flight_end_cmd.score_time = f.end_time;
                 }
 
                 flight_ends.RemoveAt(0);
@@ -480,6 +481,7 @@ public class Timeline : MonoBehaviour
         float prev_marker_time = -1;
         foreach (PlayerCmd cmd in GetPlayerCmds())
         {
+            // Determine marker time to avoid overlapping markers
             float marker_time = cmd.time;
             if (marker_time - prev_marker_time < 0.1f)
             {
@@ -487,20 +489,32 @@ public class Timeline : MonoBehaviour
             }
             prev_marker_time = marker_time;
 
+            // Create and position marker
             RectTransform marker = Instantiate(marker_prefab);
             marker.SetParent(cmds_parent, false);
             SetMarkerPosition(marker, marker_time);
-            marker.localScale = new Vector3(1, 1, 1);
 
-            // new cmd
+            // Player color
+            Color color = gm.player_colors[cmd.player_id];
+
+            // New Command
             if (cmd.cmd_id > last_drawn_cmd_id)
             {
                 last_drawn_cmd_id = Mathf.Max(cmd.cmd_id, last_drawn_cmd_id);
                 StartCoroutine(FlashMarker(marker));
+                if (cmd.scored)
+                {
+                    // Score effect
+                    Text score_marker = Instantiate(score_marker_prefab);
+                    RectTransform rt = score_marker.GetComponent<RectTransform>();
+                    score_marker.transform.SetParent(line, false);
+                    score_marker.color = color;
+                    SetMarkerPosition(rt, cmd.score_time);
+                    StartCoroutine(FlashScoreMarker(score_marker));
+                }
             }
 
-            Color color = gm.player_colors[cmd.player_id];
-
+            // Set marker color 
             if (cmd.valid)
             {
                 marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0);
@@ -527,6 +541,8 @@ public class Timeline : MonoBehaviour
             yield return null;
         }
 
+        if (marker == null) yield break;
+
         // Flash
         Image img = marker.GetComponent<Image>();
         Color color = img.color;
@@ -536,6 +552,19 @@ public class Timeline : MonoBehaviour
             img.color = i % 2 == 0 ? Color.white : color;
             yield return new WaitForSeconds(0.25f);
         }
+    }
+    private IEnumerator FlashScoreMarker(Text marker)
+    {
+        // Flash
+        Color color = marker.color;
+        for (int i = 0; i < 16; ++i)
+        {
+            if (marker == null) break;
+            marker.color = i % 2 == 0 ? Color.white : color;
+            yield return new WaitForSeconds(0.25f);
+        }
+
+        Destroy(marker.gameObject);
     }
 
     // Debug
@@ -575,6 +604,11 @@ public class Timeline : MonoBehaviour
     private Vector3 SetX(Vector3 v, float x)
     {
         v.x = x;
+        return v;
+    }
+    private Vector3 SetY(Vector3 v, float y)
+    {
+        v.y = y;
         return v;
     }
 }

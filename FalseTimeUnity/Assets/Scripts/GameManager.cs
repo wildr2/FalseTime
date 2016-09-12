@@ -348,6 +348,7 @@ public class PlayerCmd
 {
     public int cmd_id;
     public bool scored = false;
+    public float score_time;
     public bool valid;
     public float time;
     public int player_id;
