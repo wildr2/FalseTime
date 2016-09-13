@@ -35,7 +35,9 @@ public class GameManager : MonoBehaviour
     // Planets
     [System.NonSerialized] public Planet[] planets; // indexed by planet id
     public Planet planet_prefab;
+    public LineRenderer route_prefab;
     [System.NonSerialized] public float[][] planet_dists;
+    [System.NonSerialized] public bool[][] planet_routes;
 
     // Fleets
     [System.NonSerialized] public List<Fleet> fleets;
@@ -176,19 +178,7 @@ public class GameManager : MonoBehaviour
         // Generate Planets
         Random.seed = seed_manager.seed;
         GeneratePlanets();
-
-        // Store planet distances
-        planet_dists = new float[planets.Length][];
-        for (int i = 0; i < planets.Length; ++i)
-        {
-            planet_dists[i] = new float[planets.Length];
-            for (int j = 0; j < planets.Length; ++j)
-            {
-                if (i == j) continue;
-                planet_dists[i][j] = Vector2.Distance(planets[i].transform.position, planets[j].transform.position)
-                    - planets[i].Radius - planets[j].Radius;
-            }
-        }
+        CreateRoutes();
 
         // Timelines
         for (int i = 0; i < timelines.Length; ++i)
@@ -236,6 +226,44 @@ public class GameManager : MonoBehaviour
                 planet_id = (planet_id + 1) % planets.Length;
 
             planets[planet_id].Initialize(planet_id, 1, 10, i);
+        }
+
+        // Store planet distances
+        planet_dists = new float[planets.Length][];
+        for (int i = 0; i < planets.Length; ++i)
+        {
+            planet_dists[i] = new float[planets.Length];
+            for (int j = 0; j < planets.Length; ++j)
+            {
+                if (i == j) continue;
+                planet_dists[i][j] = Vector2.Distance(planets[i].transform.position, planets[j].transform.position)
+                    - planets[i].Radius - planets[j].Radius;
+            }
+        }
+    }
+    private void CreateRoutes()
+    {
+        planet_routes = new bool[planets.Length][];
+        for (int i = 0; i < planets.Length; ++i)
+            planet_routes[i] = new bool[planets.Length];
+
+        for (int i = 0; i < planets.Length; ++i)
+        {
+            for (int j = i+1; j < planets.Length; ++j)
+            {
+                float dist = planet_dists[i][j];
+                if (dist < 3f)
+                {
+                    planet_routes[i][j] = true;
+                    planet_routes[j][i] = true;
+
+                    //Debug.DrawLine(planets[i].transform.position, planets[j].transform.position, new Color(1, 1, 1, 0.25f), 1000);
+                    LineRenderer route = Instantiate(route_prefab);
+                    route.transform.SetParent(transform);
+                    route.SetPosition(0, planets[i].transform.position);
+                    route.SetPosition(1, planets[j].transform.position);
+                }
+            }
         }
     }
     private List<Vector2> GeneratePlanetPositions(int n)
@@ -393,7 +421,7 @@ public class PlayerCmd
 }
 public class Flight
 {
-    public const float speed = 1; // units per second
+    public const float speed = 0.25f; // units per second
 
     public int owner_id;
     public int ships;

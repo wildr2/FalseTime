@@ -135,7 +135,7 @@ public class Player : NetworkBehaviour
                         if (state.planet_ownerIDs[i] != player_id) continue; // skip non owned planets
                         for (int j = 0; j < gm.planets.Length; ++j)
                         {
-                            if (i == j) continue; // target planet cannot be selected planet
+                            if (!gm.planet_routes[i][j]) continue; // target planet cannot be selected planet
                             if (req_power > power_on_start_search) continue; // skip too expensive commands
 
                             float flight_time = gm.planet_dists[i][j] / Flight.speed;
@@ -150,7 +150,7 @@ public class Player : NetworkBehaviour
                             float score = 0;
 
                             // Current time
-                            if (player_id == 0) score -= (time / line.GetEndTime()) * 1f;
+                            score -= (time / line.GetEndTime()) * 1f;
 
                             // Command cost
                             score -= req_power;
@@ -248,7 +248,7 @@ public class Player : NetworkBehaviour
     {
         if (!gm.IsGamePlaying()) return;
 
-        if (selected_planet == null)
+        if (selected_planet == null || !gm.planet_routes[selected_planet.PlanetID][planet.PlanetID])
         {
             if (planet.OwnerID == player_id || gm.debug_solo)
             {
@@ -286,15 +286,17 @@ public class Player : NetworkBehaviour
         if (selected_planet == null)
         {
             // Highlight planet to select
-            planet.ShowHighlight(new Color(1, 1, 1, 0.5f));
+            planet.ShowHighlight(new Color(0.5f, 0.5f, 0.5f));
         }
         else
         {
             // Highlight planet to target
             if (planet.OwnerID == selected_planet.OwnerID)
-                planet.ShowHighlight(Color.green); // Friendly
+                planet.ShowHighlight(Color.green); // Transfer
+            else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID])
+                planet.ShowHighlight(Color.red); // Attack
             else
-                planet.ShowHighlight(Color.red); // Enemy
+                planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action
         }
     }
     private void OnPlanetMouseExit(Planet planet)
