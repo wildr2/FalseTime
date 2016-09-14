@@ -44,7 +44,7 @@ public class Planet : MonoBehaviour
         sprite_sr.transform.localScale = Vector3.one * Radius * 2f;
         highlight_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
         raycast_image.transform.localScale = Vector3.one * Radius * 2f;
-            
+        
         // Pop
         SetPop(pop, ownerID);
     }

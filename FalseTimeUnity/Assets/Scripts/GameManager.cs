@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
     // Players
     public Color[] player_colors;
     public string[] player_names;
-    public int num_players = 2;
+    public int num_humans = 2;
     public int num_bots = 2;
 
     private int players_registered = 0;
@@ -59,7 +59,7 @@ public class GameManager : MonoBehaviour
     }
     public bool ArePlayersRegistered()
     {
-        return players_registered == num_players;
+        return players_registered == GetNumPlayers();
     }
     public bool IsGameOver()
     {
@@ -79,6 +79,10 @@ public class GameManager : MonoBehaviour
         return timelines;
     }
 
+    public int GetNumPlayers()
+    {
+        return num_bots + num_humans;
+    }
     public Player GetLocalPlayer()
     {
         foreach (Player p in players.Values)
@@ -159,7 +163,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Players
-        if (num_players < 2) Debug.LogError("num_players must be > 1");
+        if (GetNumPlayers() < 2) Debug.LogError("num players must be > 1");
         players = new Dictionary<int, Player>();
         player_scores = new Dictionary<int, int>();
 
@@ -219,7 +223,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Select player start planets
-        for (int i = 0; i < Mathf.Max(num_players, 2); ++i)
+        for (int i = 0; i < GetNumPlayers(); ++i)
         {
             int planet_id = Random.Range(0, n);
             while (planets[planet_id].OwnerID != -1)

@@ -10,24 +10,23 @@ class CustomNetworkManager : NetworkManager
 
     public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId)
     {
+        if (gm == null) gm = FindObjectOfType<GameManager>();
+
         Player player = Instantiate(playerPrefab).GetComponent<Player>();
         player.player_id = connected_players;
 
-        int num_humans = gm.num_players - gm.num_bots;
-        player.ai_controlled = connected_players >= num_humans;
+        player.ai_controlled = connected_players >= gm.num_humans;
 
         NetworkServer.AddPlayerForConnection(conn, player.gameObject, playerControllerId);
 
         ++connected_players;
 
         // Add AI if all humans are connected
-        if (connected_players >= num_humans && connected_players < gm.num_players)
+        if (connected_players >= gm.num_humans && connected_players < gm.GetNumPlayers())
             ClientScene.AddPlayer((short)(playerControllerId + 1));
     }
     public override void OnStartServer()
     {
-        gm = FindObjectOfType<GameManager>();
-
         connected_players = 0;
         base.OnStartServer();
     }

@@ -118,7 +118,7 @@ public class Timeline : MonoBehaviour
             if (state_0.planet_ownerIDs[i] != -1)
             {
                 state_0.planet_ownerIDs[i] = (state_0.planet_ownerIDs[i] + id)
-                    % gm.num_players;
+                    % gm.GetNumPlayers();
             }
         }
 
