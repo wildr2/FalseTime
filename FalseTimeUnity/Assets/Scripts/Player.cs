@@ -116,6 +116,8 @@ public class Player : NetworkBehaviour
     {
         while (true)
         {
+            while (!gm.IsGamePlaying() || gm.debug_solo) yield return null;
+
             PlayerCmd best_cmd = null;
             Timeline best_cmd_line = null;
             float best_score = float.MinValue;
@@ -135,7 +137,7 @@ public class Player : NetworkBehaviour
                         if (state.planet_ownerIDs[i] != player_id) continue; // skip non owned planets
                         for (int j = 0; j < gm.planets.Length; ++j)
                         {
-                            if (!gm.planet_routes[i][j]) continue; // target planet cannot be selected planet
+                            if (gm.planet_routes[i][j] == null) continue; // target planet cannot be selected planet
                             if (req_power > power_on_start_search) continue; // skip too expensive commands
 
                             float flight_time = gm.planet_dists[i][j] / Flight.speed;
@@ -248,7 +250,7 @@ public class Player : NetworkBehaviour
     {
         if (!gm.IsGamePlaying()) return;
 
-        if (selected_planet == null || !gm.planet_routes[selected_planet.PlanetID][planet.PlanetID])
+        if (selected_planet == null || gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] == null)
         {
             if (planet.OwnerID == player_id || gm.debug_solo)
             {
@@ -293,7 +295,7 @@ public class Player : NetworkBehaviour
             // Highlight planet to target
             if (planet.OwnerID == selected_planet.OwnerID)
                 planet.ShowHighlight(Color.green); // Transfer
-            else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID])
+            else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] != null)
                 planet.ShowHighlight(Color.red); // Attack
             else
                 planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action

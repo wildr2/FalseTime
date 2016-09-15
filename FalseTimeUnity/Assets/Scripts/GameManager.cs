@@ -35,9 +35,9 @@ public class GameManager : MonoBehaviour
     // Planets
     [System.NonSerialized] public Planet[] planets; // indexed by planet id
     public Planet planet_prefab;
-    public LineRenderer route_prefab;
+    public Route route_prefab;
     [System.NonSerialized] public float[][] planet_dists;
-    [System.NonSerialized] public bool[][] planet_routes;
+    [System.NonSerialized] public Route[][] planet_routes;
 
     // Fleets
     [System.NonSerialized] public List<Fleet> fleets;
@@ -247,9 +247,9 @@ public class GameManager : MonoBehaviour
     }
     private void CreateRoutes()
     {
-        planet_routes = new bool[planets.Length][];
+        planet_routes = new Route[planets.Length][];
         for (int i = 0; i < planets.Length; ++i)
-            planet_routes[i] = new bool[planets.Length];
+            planet_routes[i] = new Route[planets.Length];
 
         for (int i = 0; i < planets.Length; ++i)
         {
@@ -258,14 +258,12 @@ public class GameManager : MonoBehaviour
                 float dist = planet_dists[i][j];
                 if (dist < 3f)
                 {
-                    planet_routes[i][j] = true;
-                    planet_routes[j][i] = true;
-
-                    //Debug.DrawLine(planets[i].transform.position, planets[j].transform.position, new Color(1, 1, 1, 0.25f), 1000);
-                    LineRenderer route = Instantiate(route_prefab);
+                    Route route = Instantiate(route_prefab);
                     route.transform.SetParent(transform);
-                    route.SetPosition(0, planets[i].transform.position);
-                    route.SetPosition(1, planets[j].transform.position);
+                    route.Initialize(planets[i], planets[j]);
+
+                    planet_routes[i][j] = route;
+                    planet_routes[j][i] = route;
                 }
             }
         }
@@ -327,6 +325,15 @@ public class GameManager : MonoBehaviour
     private void OnTimeSet(Timeline line)
     {
         CurrentTimeline = line;
+
+        foreach (Route[] routes in planet_routes)
+        {
+            foreach (Route route in routes)
+            {
+                if (route != null) route.OnSetTime(line.Time);
+            } 
+        }
+
         if (on_time_set != null) on_time_set(line);
     }
     private void OnHistoryChange(Timeline line)
@@ -402,7 +409,7 @@ public class PlayerCmd
         this.player_id = player_id;
     }   
 
-    public Flight TryToApply(WorldState state, Planet[] planets)
+    public Flight TryToApply(WorldState state, Planet[] planets, Route[][] routes)
     {
         // Can't send ships from enemy planet
         if (state.planet_ownerIDs[selected_planet_id] != player_id) return null;
@@ -413,12 +420,14 @@ public class PlayerCmd
         if (ships < 1) return null;
 
         // Create flight
+        bool to_past = routes[selected_planet_id][target_planet_id].IsQuivering();
+        float flight_time = routes[selected_planet_id][target_planet_id].GetFlightStartTime(time);
         Flight flight = new Flight(state.planet_ownerIDs[selected_planet_id],
-            ships, planets[selected_planet_id], planets[target_planet_id], time);
+                ships, planets[selected_planet_id], planets[target_planet_id], flight_time);
 
         // Modify state
         state.planet_pops[selected_planet_id] -= ships;
-        state.flights.Add(flight);
+        if (!to_past) state.flights.Add(flight);
 
         return flight;
     }

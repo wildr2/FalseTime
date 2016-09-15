@@ -172,7 +172,7 @@ public class Timeline : MonoBehaviour
         gm = FindObjectOfType<GameManager>();
         gm.on_win += OnWin;
         gm.on_time_set += OnTimeSet;
-        
+
         // UI
         SetMarkerPosition(knob, 0);
         UpdateClock();
@@ -266,6 +266,12 @@ public class Timeline : MonoBehaviour
     }
     private void RemakeKeyStates()
     {
+        RemakeKeyStates(new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>()));
+    }
+    private void RemakeKeyStates(SortedList<float, TLEvent> key_events)
+    {
+        bool pass2 = key_events.Count > 0;
+
         // Delete old key states
         key_states.Clear();
 
@@ -273,123 +279,80 @@ public class Timeline : MonoBehaviour
         SaveKeyState(state_0);
 
         // Create other key states
-        SortedList<float, Pair<PlayerCmd, Flight>> flight_ends = new SortedList<float, Pair<PlayerCmd, Flight>>(new DuplicateKeyComparer<float>());
-        LinkedListNode<PlayerCmd> next_cmd = player_cmds.First;
+        foreach (PlayerCmd cmd in player_cmds) key_events.Add(cmd.time, new TLECmd(cmd));
+        SortedList<float, TLEvent> next_pass_key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
 
-        while (true)
+        while (key_events.Count > 0)
         {
-            Flight f = flight_ends.Count > 0 ? flight_ends.Values[0].Second : null;
-            PlayerCmd cmd = next_cmd == null ? null : next_cmd.Value;
-            if (f == null && cmd == null) break;
+            TLEvent e = key_events.Values[0];
+            float time = key_events.Keys[0];
+            key_events.RemoveAt(0);
 
-            if (f == null || (cmd != null && cmd.time < f.end_time))
+            if (e as TLECmd != null)
             {
-                // Player command (flight start)
-                WorldState state = GetState(cmd.time);
-                Flight new_flight = cmd.TryToApply(state, gm.planets);
+                // Player command
+                WorldState state = GetState(e.cmd.time);
+                Flight new_flight = e.cmd.TryToApply(state, gm.planets, gm.planet_routes);
                 if (new_flight != null)
                 {
                     // Command is valid in current history
-                    cmd.valid = true;
-                    flight_ends.Add(new_flight.end_time, new Pair<PlayerCmd, Flight>(cmd, new_flight));
+                    e.cmd.valid = true;
+                    if (new_flight.end_time > e.cmd.time)
+                    {
+                        key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
+                    }
+                    else // flight to past
+                    {
+                        if (!pass2) next_pass_key_events.Add(new_flight.start_time, new TLEFlightStart(new_flight, e.cmd));
+                    }
                     SaveKeyState(state);
                 }
                 else
                 {
-                    cmd.valid = false;
+                    e.cmd.valid = false;
                 }
-                next_cmd = next_cmd.Next;
             }
-            else
+            else if (e as TLEFlightStart != null)
+            {
+                // Flight start (from command at other time)
+                WorldState state = GetState(e.flight.start_time);
+                state.flights.Add(e.flight);
+                key_events.Add(e.flight.end_time, new TLEFlightEnd(e.flight, e.cmd));
+                SaveKeyState(state);
+            }
+            else if (e as TLEFlightEnd != null)
             {
                 // Flight end
-                if (f.end_time <= GetEndTime())
+                if (e.flight.end_time <= GetEndTime())
                 {
-                    WorldState state = GetState(f.end_time);
+                    WorldState state = GetState(e.flight.end_time);
                     bool scored = false;
-                    ApplyFlightEnd(state, f, out scored);
+                    ApplyFlightEnd(state, e.flight, out scored);
                     SaveKeyState(state);
 
-                    PlayerCmd flight_end_cmd = flight_ends.Values[0].First;
-                    if (scored && !flight_end_cmd.scored)
+                    if (scored && !e.cmd.scored)
                     {
-                        gm.GivePoint(flight_end_cmd.player_id);
-                        flight_end_cmd.scored = true;
-                        flight_end_cmd.score_time = f.end_time;
+                        gm.GivePoint(e.cmd.player_id);
+                        e.cmd.scored = true;
+                        e.cmd.score_time = e.flight.end_time;
                     }
                 }
-
-                flight_ends.RemoveAt(0);
             }
+        }
+
+        // Next pass
+        if (next_pass_key_events.Count > 0)
+        {
+            RemakeKeyStates(next_pass_key_events);
+            return;
         }
 
         // Event
         OnHistoryChange();
-        
+
         // Debug
         if (log_states) LogStates();
     }
-    private void RemakeKeyStates2()
-    {
-        // Create flight events
-        SortedList<float, Flight> flight_events = new SortedList<float, Flight>();
-
-        foreach (PlayerCmd cmd in player_cmds)
-        {
-            WorldState state = GetState(cmd.time);
-            int n = state.planet_pops[cmd.selected_planet_id] / 2;
-
-            Flight flight = new Flight(
-                gm.planets[cmd.selected_planet_id].OwnerID,
-                n,
-                gm.planets[cmd.selected_planet_id],
-                gm.planets[cmd.target_planet_id], cmd.time);
-
-            flight_events.Add(flight.start_time, flight);
-            flight_events.Add(flight.end_time, flight);
-        }
-
-        // Save key states for flight events
-        foreach (KeyValuePair<float, Flight> fe in flight_events)
-        {
-            float time = fe.Key;
-            Flight f = fe.Value;
-
-            if (time == f.start_time)
-            {
-                // Flight start
-                WorldState state = GetState(time);
-                state.planet_pops[f.start_planet_id] -= f.ships;
-                SaveKeyState(state);
-            }
-            else
-            {
-                // Flight end
-                WorldState state = GetState(time);
-                state.flights.Remove(f);
-
-                if (f.owner_id == state.planet_ownerIDs[f.end_planet_id])
-                {
-                    // Transfer
-                    state.planet_pops[f.end_planet_id] += f.ships;
-                }
-                else
-                {
-                    // Attack
-                    int new_pop = state.planet_pops[f.end_planet_id] - f.ships;
-                    if (new_pop >= 0) state.planet_pops[f.end_planet_id] = new_pop;
-                    else
-                    {
-                        // Allegiance change
-                        state.planet_pops[f.end_planet_id] = -new_pop;
-                        state.planet_ownerIDs[f.end_planet_id] = f.owner_id;
-                    }
-                }
-
-                SaveKeyState(state);
-            }
-        }
-    } // NOT USED
     private void ApplyFlightEnd(WorldState state, Flight flight, out bool scored)
     {
         scored = false;
@@ -415,6 +378,7 @@ public class Timeline : MonoBehaviour
             }
         }
     }
+
 
     // Player Commands
     private void SaveCommand(PlayerCmd cmd)
@@ -613,3 +577,33 @@ public class Timeline : MonoBehaviour
         return v;
     }
 }
+
+public abstract class TLEvent
+{
+    public Flight flight;
+    public PlayerCmd cmd;
+}
+public class TLEFlightEnd : TLEvent
+{
+    public TLEFlightEnd(Flight flight, PlayerCmd cmd)
+    {
+        this.flight = flight;
+        this.cmd = cmd;
+    }
+}
+public class TLECmd : TLEvent
+{
+    public TLECmd(PlayerCmd cmd)
+    {
+        this.cmd = cmd;
+    }
+}
+public class TLEFlightStart : TLEvent
+{
+    public TLEFlightStart(Flight flight, PlayerCmd cmd)
+    {
+        this.flight = flight;
+        this.cmd = cmd;
+    }
+}
+
