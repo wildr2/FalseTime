@@ -5,11 +5,10 @@ using System;
 
 public class SeedManager : NetworkBehaviour
 {
-    [SyncVar] [NonSerialized] public int seed;
+    [SyncVar] public int seed;
     [SyncVar] [NonSerialized] public bool seed_set = false;
 
     public bool use_custom_seed = true;
-    public int custom_seed;
 
     public override void OnStartServer()
     {
@@ -17,7 +16,7 @@ public class SeedManager : NetworkBehaviour
 
         if (!isServer) return;
 
-        seed = use_custom_seed ? custom_seed : (int)DateTime.Now.Ticks;
+        seed = use_custom_seed ? seed : (int)DateTime.Now.Ticks;
         seed_set = true;
     }
 }

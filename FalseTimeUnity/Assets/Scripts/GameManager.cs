@@ -420,14 +420,16 @@ public class PlayerCmd
         if (ships < 1) return null;
 
         // Create flight
-        bool to_past = routes[selected_planet_id][target_planet_id].IsQuivering();
-        float flight_time = routes[selected_planet_id][target_planet_id].GetFlightStartTime(time);
+        bool time_traveling = routes[selected_planet_id][target_planet_id].IsQuivering(time);
+
         Flight flight = new Flight(state.planet_ownerIDs[selected_planet_id],
-                ships, planets[selected_planet_id], planets[target_planet_id], flight_time);
+                ships, planets[selected_planet_id], planets[target_planet_id], time);
+
+        if (time_traveling) flight.flight_type = FlightType.TimeTravelSend;
 
         // Modify state
         state.planet_pops[selected_planet_id] -= ships;
-        if (!to_past) state.flights.Add(flight);
+        state.flights.Add(flight);
 
         return flight;
     }
@@ -441,6 +443,7 @@ public class Flight
     public int start_planet_id;
     public int end_planet_id;
     public float start_time, end_time;
+    public FlightType flight_type = FlightType.Normal;
 
     public Flight(int owner_id, int ships, Planet start_planet, Planet end_planet, float start_time)
     {
@@ -461,10 +464,17 @@ public class Flight
         ships = to_copy.ships;
         start_planet_id = to_copy.start_planet_id;
         end_planet_id = to_copy.end_planet_id;
-        //progress = to_copy.progress;
         start_time = to_copy.start_time;
         end_time = to_copy.end_time;
-        //progress_rate = to_copy.progress_rate;
+        flight_type = to_copy.flight_type;
+    }
+    public static Flight MakeRecvFlight(Flight send_flight, Route[][] routes)
+    {
+        Flight f = new Flight(send_flight);
+        f.flight_type = FlightType.TimeTravelRecv;
+        f.start_time = routes[f.start_planet_id][f.end_planet_id].GetTimeTravelTime(send_flight.start_time);
+        f.end_time = f.start_time + (send_flight.end_time - send_flight.start_time);
+        return f;
     }
 
     public float GetProgress(float time)
@@ -472,16 +482,4 @@ public class Flight
         return (time - start_time) / (end_time - start_time);
     }
 }
-
-class FlightEndComparer : IEqualityComparer<Flight>
-{
-    public bool Equals(Flight f1, Flight f2)
-    {
-        return f1.end_time == f2.end_time;
-    }
-
-    public int GetHashCode(Flight f)
-    {
-        return f.end_time.GetHashCode();
-    }
-}
+public enum FlightType { Normal, TimeTravelSend, TimeTravelRecv }

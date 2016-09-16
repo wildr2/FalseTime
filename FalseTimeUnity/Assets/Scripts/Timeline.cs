@@ -221,12 +221,20 @@ public class Timeline : MonoBehaviour
         }
         gm.fleets.Clear();
 
-        // Add new gm.fleets
+        // Add new fleets
         foreach (Flight flight in state.flights)
         {
+            float p = flight.GetProgress(state.time);
+
             Fleet fleet = Instantiate(gm.fleet_prefab);
             fleet.Initialize(flight.owner_id, flight.ships, gm.player_colors[flight.owner_id]);
-            fleet.SetPosition(gm.planets[flight.start_planet_id], gm.planets[flight.end_planet_id], flight.GetProgress(state.time));
+            fleet.SetPosition(gm.planets[flight.start_planet_id], gm.planets[flight.end_planet_id], p);
+
+            if (flight.flight_type == FlightType.TimeTravelSend)
+                fleet.SetAlpha(Mathf.Max(0, 1 - p * 2f));
+            else if (flight.flight_type == FlightType.TimeTravelRecv)
+                fleet.SetAlpha(Mathf.Min(1, p*2f));
+
             gm.fleets.Add(fleet);
         }
     }
@@ -293,17 +301,19 @@ public class Timeline : MonoBehaviour
                 // Player command
                 WorldState state = GetState(e.cmd.time);
                 Flight new_flight = e.cmd.TryToApply(state, gm.planets, gm.planet_routes);
+
+                Tools.Log(e.cmd.time + " " + (new_flight == null ? "null" : new_flight.flight_type.ToString()));
+
                 if (new_flight != null)
                 {
                     // Command is valid in current history
                     e.cmd.valid = true;
-                    if (new_flight.end_time > e.cmd.time)
+                    key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
+
+                    if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past
                     {
-                        key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
-                    }
-                    else // flight to past
-                    {
-                        if (!pass2) next_pass_key_events.Add(new_flight.start_time, new TLEFlightStart(new_flight, e.cmd));
+                        Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
+                        if (!pass2) next_pass_key_events.Add(recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
                     }
                     SaveKeyState(state);
                 }
@@ -357,6 +367,8 @@ public class Timeline : MonoBehaviour
     {
         scored = false;
         state.flights.Remove(flight);
+
+        if (flight.flight_type == FlightType.TimeTravelSend) return;
 
         if (flight.owner_id == state.planet_ownerIDs[flight.end_planet_id])
         {

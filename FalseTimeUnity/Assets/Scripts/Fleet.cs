@@ -28,6 +28,11 @@ public class Fleet : MonoBehaviour
         transform.position = Vector3.Lerp(p0, p1, progress);
         sprite_sr.transform.rotation = LookRotation2D(dir, -90);
     }
+    public void SetAlpha(float a)
+    {
+        text.color = Tools.SetColorAlpha(text.color, a);
+        sprite_sr.color = Tools.SetColorAlpha(sprite_sr.color, a);
+    }
 
     private Quaternion LookRotation2D(Vector2 forward, float deg_offset=0)
     {

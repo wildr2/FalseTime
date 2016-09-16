@@ -9,6 +9,27 @@ public class Route : MonoBehaviour
     private float quiv_t1 = -1, quiv_t2 = -1, quiv_len = 0;
 
 
+    public float GetTimeTravelTime(float from_time)
+    {
+        if (quiv_len > 0)
+        {
+            if (from_time > quiv_t1 && from_time < quiv_t1 + quiv_len)
+            {
+                return quiv_t2 + from_time - quiv_t1;
+            }
+            else if (from_time > quiv_t2 && from_time < quiv_t2 + quiv_len)
+            {
+                return quiv_t1 + from_time - quiv_t2;
+            }
+        }
+        return from_time;
+    }
+    public bool IsQuivering(float time)
+    {
+        return GetTimeTravelTime(time) != time;
+    }
+
+
     public void Initialize(Planet p1, Planet p2)
     {
         this.p1 = p1;
@@ -29,37 +50,17 @@ public class Route : MonoBehaviour
 
         if (time > quiv_t1 && time < quiv_t1 + quiv_len)
         {
-            if (!IsQuivering()) StartQuiver();
+            if (quiver_routine == null) StartQuiver();
         }
         else if (time > quiv_t2 && time < quiv_t2 + quiv_len)
         {
-            if (!IsQuivering()) StartQuiver();
+            if (quiver_routine == null) StartQuiver();
         }
         else
         {
-            if (IsQuivering()) StopQuiver();
+            if (quiver_routine != null) StopQuiver();
         }
     }
-    public bool IsQuivering()
-    {
-        return quiver_routine != null;
-    }
-    public float GetFlightStartTime(float time)
-    {
-        if (quiv_len > 0)
-        {
-            if (time > quiv_t1 && time < quiv_t1 + quiv_len)
-            {
-                return quiv_t2 + time - quiv_t1;
-            }
-            else if (time > quiv_t2 && time < quiv_t2 + quiv_len)
-            {
-                return quiv_t1 + time - quiv_t2;
-            }
-        }
-        return time;
-    }
-
 
     private void Awake()
     {
