@@ -302,7 +302,7 @@ public class Timeline : MonoBehaviour
                 WorldState state = GetState(e.cmd.time);
                 Flight new_flight = e.cmd.TryToApply(state, gm.planets, gm.planet_routes);
 
-                Tools.Log(e.cmd.time + " " + (new_flight == null ? "null" : new_flight.flight_type.ToString()));
+                //Tools.Log(e.cmd.time + " " + (new_flight == null ? "null" : new_flight.flight_type.ToString()));
 
                 if (new_flight != null)
                 {

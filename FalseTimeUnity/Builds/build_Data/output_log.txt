@@ -14,19 +14,19 @@ Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUn
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.036 seconds
+- Completed reload, in  0.068 seconds
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.dll (this message is harmless)
 desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.456968 ms
+UnloadTime: 0.415399 ms
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.861837 ms
+UnloadTime: 2.649596 ms
 
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 380.
-Total: 0.502051 ms (FindLiveObjects: 0.024882 ms CreateObjectMapping: 0.061182 ms MarkObjects: 0.412179 ms  DeleteObjects: 0.003512 ms)
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 382.
+Total: 0.369438 ms (FindLiveObjects: 0.019906 ms CreateObjectMapping: 0.011416 ms MarkObjects: 0.334602 ms  DeleteObjects: 0.003220 ms)
 
 <color=#0000FF>Registered player 0</color>
 
@@ -56,12 +56,12 @@ desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.379685 ms
+UnloadTime: 0.397541 ms
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.892868 ms
+UnloadTime: 2.678870 ms
 
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 375.
-Total: 0.469264 ms (FindLiveObjects: 0.060304 ms CreateObjectMapping: 0.013173 ms MarkObjects: 0.391980 ms  DeleteObjects: 0.003512 ms)
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 377.
+Total: 0.400469 ms (FindLiveObjects: 0.018735 ms CreateObjectMapping: 0.019028 ms MarkObjects: 0.359192 ms  DeleteObjects: 0.003220 ms)
 
 <color=#0000FF>Registered player 1</color>
 
@@ -78,12 +78,62 @@ Total: 0.469264 ms (FindLiveObjects: 0.060304 ms CreateObjectMapping: 0.013173 m
  
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
 
+10.39813 Normal
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+10.39813 Normal
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+10.39813 Normal
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+11.31148 TimeTravelSend
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+10.39813 Normal
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+11.31148 TimeTravelSend
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+10.39813 Normal
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+11.31148 TimeTravelSend
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+10.39813 Normal
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+11.31148 TimeTravelSend
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 4d18 -> priority: 1 
+  Thread -> id: 46fc -> priority: 1 
 Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:7777}
 Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 1.911892 ms
+UnloadTime: 1.470436 ms
 
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 263.
-Total: 0.406031 ms (FindLiveObjects: 0.007025 ms CreateObjectMapping: 0.010245 ms MarkObjects: 0.384369 ms  DeleteObjects: 0.004098 ms)
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 265.
+Total: 0.300351 ms (FindLiveObjects: 0.006733 ms CreateObjectMapping: 0.009367 ms MarkObjects: 0.279860 ms  DeleteObjects: 0.004391 ms)
 
