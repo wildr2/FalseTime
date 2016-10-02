@@ -37,6 +37,9 @@ public class Timeline : MonoBehaviour
     private int last_drawn_cmd_id = -1;
     private float latest_cmd_time;
 
+    private SortedList<float, TLEvent> fwd_key_events;
+
+
     // Events
     public System.Action<Timeline> on_time_set;
     public System.Action<Timeline> on_history_change;
@@ -111,6 +114,7 @@ public class Timeline : MonoBehaviour
 
         // Create initial history
         state_0 = new WorldState(0, gm.planets);
+        fwd_key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
 
         // Rotate starting planets
         for (int i = 0; i < state_0.planet_ownerIDs.Length; ++i)
@@ -272,14 +276,12 @@ public class Timeline : MonoBehaviour
         }
         return node;
     }
+    //private void RemakeKeyStates()
+    //{
+    //    RemakeKeyStates(new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>()));
+    //}
     private void RemakeKeyStates()
     {
-        RemakeKeyStates(new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>()));
-    }
-    private void RemakeKeyStates(SortedList<float, TLEvent> key_events)
-    {
-        bool pass2 = key_events.Count > 0;
-
         // Delete old key states
         key_states.Clear();
 
@@ -287,8 +289,13 @@ public class Timeline : MonoBehaviour
         SaveKeyState(state_0);
 
         // Create other key states
+        SortedList<float, TLEvent> prev_fwd_key_events = fwd_key_events;
+        fwd_key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
+
+        SortedList<float, TLEvent> key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
+        foreach (KeyValuePair<float, TLEvent> kv in prev_fwd_key_events) key_events.Add(kv.Key, kv.Value);
         foreach (PlayerCmd cmd in player_cmds) key_events.Add(cmd.time, new TLECmd(cmd));
-        SortedList<float, TLEvent> next_pass_key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
+        
 
         while (key_events.Count > 0)
         {
@@ -313,7 +320,7 @@ public class Timeline : MonoBehaviour
                     if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past
                     {
                         Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
-                        if (!pass2) next_pass_key_events.Add(recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
+                        fwd_key_events.Add(recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
                     }
                     SaveKeyState(state);
                 }
@@ -350,10 +357,24 @@ public class Timeline : MonoBehaviour
             }
         }
 
-        // Next pass
-        if (next_pass_key_events.Count > 0)
+        // Multiple passes
+        bool settled = prev_fwd_key_events.Count == fwd_key_events.Count;
+        if (settled)
         {
-            RemakeKeyStates(next_pass_key_events);
+            for (int i = 0; i < prev_fwd_key_events.Count; ++i)
+            {
+                if (prev_fwd_key_events.Values[i].flight.ships != fwd_key_events.Values[i].flight.ships)
+                {
+                    //Tools.Log(prev_fwd_key_events.Values[i].flight.ships + " != " + fwd_key_events.Values[i].flight.ships);
+                    settled = false;
+                    break;
+                }
+            }
+        }
+        if (!settled)
+        {
+            //Tools.Log("next pass");
+            RemakeKeyStates();
             return;
         }
 
