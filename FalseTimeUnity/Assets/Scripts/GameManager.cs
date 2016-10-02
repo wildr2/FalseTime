@@ -325,15 +325,6 @@ public class GameManager : MonoBehaviour
     private void OnTimeSet(Timeline line)
     {
         CurrentTimeline = line;
-
-        foreach (Route[] routes in planet_routes)
-        {
-            foreach (Route route in routes)
-            {
-                if (route != null) route.OnSetTime(line.Time);
-            } 
-        }
-
         if (on_time_set != null) on_time_set(line);
     }
     private void OnHistoryChange(Timeline line, float earliest)

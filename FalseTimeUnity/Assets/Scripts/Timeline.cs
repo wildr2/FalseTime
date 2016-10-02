@@ -211,10 +211,19 @@ public class Timeline : MonoBehaviour
     // General World State
     private void LoadState(WorldState state)
     {
-        // Update gm.planets
+        // Update planets
         for (int i = 0; i < gm.planets.Length; ++i)
         {
             gm.planets[i].SetPop(state.planet_pops[i], state.planet_ownerIDs[i]);
+        }
+
+        // Update routes
+        foreach (Route[] routes in gm.planet_routes)
+        {
+            foreach (Route route in routes)
+            {
+                if (route != null) route.UpdateVisuals(Time);
+            }
         }
 
         // Destroy existing gm.fleets

@@ -44,7 +44,7 @@ public class Route : MonoBehaviour
             quiv_t2 = Random.Range(quiv_t1+quiv_len, 120 - quiv_len);
         }
     }
-    public void OnSetTime(float time)
+    public void UpdateVisuals(float time)
     {
         // Color
         Color c = Color.Lerp(Color.black, Color.white, 0.1f);
