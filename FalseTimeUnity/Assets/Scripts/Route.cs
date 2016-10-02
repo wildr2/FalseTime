@@ -7,6 +7,7 @@ public class Route : MonoBehaviour
     private Planet p1, p2;
     private Coroutine quiver_routine;
     private float quiv_t1 = -1, quiv_t2 = -1, quiv_len = 0;
+    private bool crossing = false;
 
 
     public float GetTimeTravelTime(float from_time)
@@ -28,6 +29,10 @@ public class Route : MonoBehaviour
     {
         return GetTimeTravelTime(time) != time;
     }
+    public bool IsCrossing()
+    {
+        return crossing;
+    }
 
 
     public void Initialize(Planet p1, Planet p2)
@@ -42,7 +47,14 @@ public class Route : MonoBehaviour
             quiv_len = 5;
             quiv_t1 = Random.Range(0, 120 - quiv_len*4f);
             quiv_t2 = Random.Range(quiv_t1+quiv_len, 120 - quiv_len);
+
+            if (Random.value < 0.5f)
+            {
+                crossing = true;
+                line.SetWidth(0.1f, 0.1f);
+            }
         }
+        
     }
     public void UpdateVisuals(float time)
     {
@@ -85,7 +97,7 @@ public class Route : MonoBehaviour
         float[] phase = new float[n - 2];
         for (int i = 0; i < n - 2; ++i)
         {
-            phase[i] = Random.value * Mathf.PI * 2f;
+            phase[i] = Random.value * Mathf.PI * 2f; //(float)i/n * Mathf.PI * 2f; //
         }
 
 
