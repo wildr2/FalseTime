@@ -214,7 +214,7 @@ public class GameManager : MonoBehaviour
             Planet planet = Instantiate(planet_prefab);
             planet.transform.SetParent(transform);
 
-            float size = Random.Range(0.28f, 2f);
+            float size = Random.Range(0.75f, 2f);
             int pop = (int)(size * Random.value * 10);
             planet.Initialize(i, size, pop, -1);
             planet.transform.position = positions[i] * 2.5f;

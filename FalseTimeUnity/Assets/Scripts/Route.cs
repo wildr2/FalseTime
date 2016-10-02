@@ -36,7 +36,7 @@ public class Route : MonoBehaviour
         this.p2 = p2;
         line.SetPosition(0, p1.transform.position);
         line.SetPosition(1, p2.transform.position);
-
+   
         if (Random.value < 0.25f)
         {
             quiv_len = 5;
@@ -46,19 +46,26 @@ public class Route : MonoBehaviour
     }
     public void OnSetTime(float time)
     {
-        if (quiv_len <= 0) return;
+        // Color
+        Color c = Color.Lerp(Color.black, Color.white, 0.1f);
+        //line.SetWidth(p1.OwnerID == -1 ? 0.03f : 0.08f, p2.OwnerID == -1 ? 0.03f : 0.08f);
+        line.SetColors(p1.OwnerID == -1 ? c : p1.sprite_sr.color, p2.OwnerID == -1 ? c : p2.sprite_sr.color);
 
-        if (time > quiv_t1 && time < quiv_t1 + quiv_len)
+        // Quiver
+        if (quiv_len > 0)
         {
-            if (quiver_routine == null) StartQuiver();
-        }
-        else if (time > quiv_t2 && time < quiv_t2 + quiv_len)
-        {
-            if (quiver_routine == null) StartQuiver();
-        }
-        else
-        {
-            if (quiver_routine != null) StopQuiver();
+            if (time > quiv_t1 && time < quiv_t1 + quiv_len)
+            {
+                if (quiver_routine == null) StartQuiver();
+            }
+            else if (time > quiv_t2 && time < quiv_t2 + quiv_len)
+            {
+                if (quiver_routine == null) StartQuiver();
+            }
+            else
+            {
+                if (quiver_routine != null) StopQuiver();
+            }
         }
     }
 

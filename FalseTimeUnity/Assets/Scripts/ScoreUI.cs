@@ -38,7 +38,7 @@ public class ScoreUI : MonoBehaviour
         foreach (Player player in gm.GetPlayers().Values)
         {
             score_text.text += Tools.ColorRichTxt(gm.GetPlayerScore(player).ToString(), gm.player_colors[player.player_id]);
-            score_text.text += " - ";
+            score_text.text += " / ";
         }
         if (score_text.text.Length < 2) return;
         score_text.text = score_text.text.Substring(0, score_text.text.Length - 2);

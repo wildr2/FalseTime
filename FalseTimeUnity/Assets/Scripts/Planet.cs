@@ -10,8 +10,9 @@ public class Planet : MonoBehaviour
 
     private Text text;
     public Image raycast_image;
-    public SpriteRenderer sprite_sr;
+    public SpriteRenderer sprite_sr, inner_sprite_sr;
     public SpriteRenderer highlight_sr;
+    public MeshRenderer sphere;
 
     public int PlanetID { get; private set; }
     public float Size { get; private set; }
@@ -42,11 +43,19 @@ public class Planet : MonoBehaviour
         Size = size;
         Radius = size / 2.5f;
         sprite_sr.transform.localScale = Vector3.one * Radius * 2f;
+        //inner_sprite_sr.transform.localScale = Vector3.one * (Radius * 2f - 0.05f);
+        sphere.transform.localScale = Vector3.one * (Radius * 2f - 0.05f);
         highlight_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
         raycast_image.transform.localScale = Vector3.one * Radius * 2f;
         
         // Pop
         SetPop(pop, ownerID);
+
+        // Color
+        //sphere.material.color = Color.Lerp(Color.Lerp(new Color(Random.value, Random.value, Random.value), Color.white, 0.6f), Color.black, 0f);
+        sphere.material.color = neutral_color; //HsvToRgb(Random.value * 360, 0f, 0.3f);
+        //sphere.material.color = Color.Lerp(sprite_sr.color, Color.black, 0.5f);
+        text.color = Color.black;
     }
     public void ShowHighlight(Color color)
     {
@@ -68,7 +77,23 @@ public class Planet : MonoBehaviour
         text.text = pop.ToString();
 
         OwnerID = ownerID;
-        sprite_sr.color = ownerID == -1 ? neutral_color : gm.player_colors[ownerID];
+        sprite_sr.color = ownerID == -1 ? Color.clear : gm.player_colors[ownerID];
+        //text.color = ownerID == -1 ? Color.black : sprite_sr.color;
+        text.color = ownerID == -1 ? new Color(0.5f, 0.5f, 0.5f) : sprite_sr.color;
+        //inner_sprite_sr.color = Color.Lerp(sprite_sr.color, Color.black, 0.8f);
+        //sphere.material.color = Color.Lerp(sprite_sr.color, Color.black, 0.5f);
+
+        //ParticleSystem ps = GetComponentInChildren<ParticleSystem>();
+        //if (OwnerID == -1)
+        //{
+        //    ps.Stop();
+        //    ps.Clear();
+        //}
+        //else
+        //{
+        //    ps.startColor = sprite_sr.color;
+        //    ps.Play();
+        //}
     }
 
 
@@ -80,4 +105,101 @@ public class Planet : MonoBehaviour
     {
         if (on_pointer_exit != null) on_pointer_exit(this);
     }
+
+    /// <summary>
+    /// Convert HSV to RGB
+    /// h is from 0-360
+    /// s,v values are 0-1
+    /// Based upon http://ilab.usc.edu/wiki/index.php/HSV_And_H2SV_Color_Space#HSV_Transformation_C_.2F_C.2B.2B_Code_2
+    /// </summary>
+    private Color HsvToRgb(float h, float S, float V)
+    {
+        float H = h;
+        while (H < 0) { H += 360; };
+        while (H >= 360) { H -= 360; };
+        float R, G, B;
+        if (V <= 0)
+        { R = G = B = 0; }
+        else if (S <= 0)
+        {
+            R = G = B = V;
+        }
+        else
+        {
+            float hf = H / 60f;
+            int i = (int)Mathf.Floor(hf);
+            float f = hf - i;
+            float pv = V * (1 - S);
+            float qv = V * (1 - S * f);
+            float tv = V * (1 - S * (1 - f));
+            switch (i)
+            {
+
+                // Red is the dominant color
+
+                case 0:
+                    R = V;
+                    G = tv;
+                    B = pv;
+                    break;
+
+                // Green is the dominant color
+
+                case 1:
+                    R = qv;
+                    G = V;
+                    B = pv;
+                    break;
+                case 2:
+                    R = pv;
+                    G = V;
+                    B = tv;
+                    break;
+
+                // Blue is the dominant color
+
+                case 3:
+                    R = pv;
+                    G = qv;
+                    B = V;
+                    break;
+                case 4:
+                    R = tv;
+                    G = pv;
+                    B = V;
+                    break;
+
+                // Red is the dominant color
+
+                case 5:
+                    R = V;
+                    G = pv;
+                    B = qv;
+                    break;
+
+                // Just in case we overshoot on our math by a little, we put these here. Since its a switch it won't slow us down at all to put these here.
+
+                case 6:
+                    R = V;
+                    G = tv;
+                    B = pv;
+                    break;
+                case -1:
+                    R = V;
+                    G = pv;
+                    B = qv;
+                    break;
+
+                // The color is not defined, we should throw an error.
+
+                default:
+                    //LFATAL("i Value error in Pixel conversion, Value is %d", i);
+                    R = G = B = V; // Just pretend its black/white
+                    break;
+            }
+        }
+        return new Color(R, G, B);
+    }
 }
+
+
