@@ -334,7 +334,7 @@ public class Timeline : MonoBehaviour
             {
                 //if (!tls[i].settled)
                 //{
-                Tools.Log("TL " + i + " remake");
+                //Tools.Log("TL " + i + " remake");
                 tls[i].RemakeKeyStates();
                 //}
             }
@@ -343,7 +343,7 @@ public class Timeline : MonoBehaviour
             for (int i = 0; i < tls.Count; ++i)
             {
                 tls[i].CheckSettled(); // updates latest change time and settled
-                Tools.Log("TL " + i + " next: " + tls[i].next_fwd_key_events.Count + " settled: " + tls[i].settled);
+                //Tools.Log("TL " + i + " next: " + tls[i].next_fwd_key_events.Count + " settled: " + tls[i].settled);
                 tls[i].fwd_key_events = tls[i].next_fwd_key_events;
                 tls[i].next_fwd_key_events = new SortedList<float, TLEvent>(
                     new DuplicateKeyComparer<float>());
@@ -416,7 +416,6 @@ public class Timeline : MonoBehaviour
             else if (e as TLEFlightStart != null)
             {
                 // Flight start (from command at other time)
-                Tools.Log("flight start at " + e.flight.start_time);
                 WorldState state = GetState(e.flight.start_time);
                 state.flights.Add(e.flight);
                 key_events.Add(e.flight.end_time, new TLEFlightEnd(e.flight, e.cmd));
