@@ -42,7 +42,7 @@ public class Timeline : MonoBehaviour
 
     // Events
     public System.Action<Timeline> on_time_set;
-    public System.Action<Timeline> on_history_change;
+    public System.Action<Timeline, float> on_history_change;
 
 
     // PUBLIC ACCESSORS
@@ -126,8 +126,7 @@ public class Timeline : MonoBehaviour
             }
         }
 
-
-        RemakeKeyStates();
+        RemakeKeyStates(0);
     }
     public void SetTime(float time)
     {
@@ -161,7 +160,7 @@ public class Timeline : MonoBehaviour
         cmd.cmd_id = ++latest_cmd_id;
         latest_cmd_time = cmd.time;
         SaveCommand(cmd);
-        RemakeKeyStates();
+        RemakeKeyStates(latest_cmd_time);
         if (gm.CurrentTimeline == this) LoadState(GetState(Time));
     }
 
@@ -280,7 +279,7 @@ public class Timeline : MonoBehaviour
     //{
     //    RemakeKeyStates(new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>()));
     //}
-    private void RemakeKeyStates()
+    private void RemakeKeyStates(float earliest_change)
     {
         // Delete old key states
         key_states.Clear();
@@ -317,7 +316,7 @@ public class Timeline : MonoBehaviour
                     e.cmd.valid = true;
                     key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
 
-                    if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past
+                    if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past or future
                     {
                         Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
                         fwd_key_events.Add(recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
@@ -357,29 +356,42 @@ public class Timeline : MonoBehaviour
             }
         }
 
-        // Multiple passes
-        bool settled = prev_fwd_key_events.Count == fwd_key_events.Count;
-        if (settled)
+        // Determine if another pass is needed (and the earliest time of change)
+        bool settled = true;
+        for (int i = 0; i < Mathf.Max(prev_fwd_key_events.Count, fwd_key_events.Count); ++i)
         {
-            for (int i = 0; i < prev_fwd_key_events.Count; ++i)
+            if (i >= prev_fwd_key_events.Count)
             {
-                if (prev_fwd_key_events.Values[i].flight.ships != fwd_key_events.Values[i].flight.ships)
-                {
-                    //Tools.Log(prev_fwd_key_events.Values[i].flight.ships + " != " + fwd_key_events.Values[i].flight.ships);
-                    settled = false;
-                    break;
-                }
+                earliest_change = Mathf.Min(earliest_change, fwd_key_events.Keys[i]);
+                settled = false; break;
+            }
+            if (i >= fwd_key_events.Count)
+            {
+                earliest_change = Mathf.Min(earliest_change, prev_fwd_key_events.Keys[i]);
+                settled = false; break;
+            }
+            if (prev_fwd_key_events.Keys[i] != fwd_key_events.Keys[i])
+            {
+                earliest_change = Mathf.Min(earliest_change, Mathf.Min(fwd_key_events.Keys[i], prev_fwd_key_events.Keys[i]));
+                settled = false; break;
+            }
+            if (prev_fwd_key_events.Values[i].flight.ships != fwd_key_events.Values[i].flight.ships)
+            {
+                //Tools.Log(prev_fwd_key_events.Values[i].flight.ships + " != " + fwd_key_events.Values[i].flight.ships);
+                earliest_change = Mathf.Min(earliest_change, fwd_key_events.Keys[i]);
+                settled = false; break;
             }
         }
         if (!settled)
         {
+            // Another pass needed
             //Tools.Log("next pass");
-            RemakeKeyStates();
+            RemakeKeyStates(earliest_change);
             return;
         }
 
         // Event
-        OnHistoryChange();
+        OnHistoryChange(earliest_change);
 
         // Debug
         if (log_states) LogStates();
@@ -446,10 +458,10 @@ public class Timeline : MonoBehaviour
     private void OnWin(int winner, float win_time)
     {
     }
-    private void OnHistoryChange()
+    private void OnHistoryChange(float earliest)
     {
         UpdateHistoryMarkers();
-        if (on_history_change != null) on_history_change(this);
+        if (on_history_change != null) on_history_change(this, earliest);
     }
     private void OnTimeSet(Timeline line)
     {

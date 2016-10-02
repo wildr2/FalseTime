@@ -321,7 +321,7 @@ public class Player : NetworkBehaviour
         // Win condition
         CmdCheckForWin(line.LineID, line.Time);
     }
-    private void OnHistoryChange(Timeline line)
+    private void OnHistoryChange(Timeline line, float earliest)
     {
         if (!ai_controlled) UpdateRequiredPower(gm.CurrentTimeline, gm.CurrentTimeline.Time);
         SetPower(power); // force ui update

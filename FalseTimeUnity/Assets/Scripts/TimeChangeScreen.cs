@@ -9,7 +9,10 @@ public class TimeChangeScreen : MonoBehaviour
     private Text text;
     private GameManager gm;
     private Coroutine flash_routine;
+
     private Timeline flash_line;
+    private float earliest_change;
+
 
     private void Awake()
     {
@@ -32,10 +35,13 @@ public class TimeChangeScreen : MonoBehaviour
         }
     }
 
-    private void OnHistoryChange(Timeline line)
+    private void OnHistoryChange(Timeline line, float earliest)
     {
+        Tools.Log(earliest);
+        earliest_change = earliest;
+
         // only flash if more than 0.1 seconds ahead of change
-        if (gm.CurrentTimeline == line && line.Time > line.GetLatestCmdTime() + 0.1f)
+        if (gm.CurrentTimeline == line && line.Time > earliest + 0.1f)
         {
             // Start flash
             flash_line = line;
@@ -48,7 +54,7 @@ public class TimeChangeScreen : MonoBehaviour
     }
     private void OnTimeSet(Timeline line)
     {
-        if (flash_routine != null && (line != flash_line || line.Time < flash_line.GetLatestCmdTime()))
+        if (flash_routine != null && (line != flash_line || line.Time < earliest_change))
         {
             StopFlash();
         }

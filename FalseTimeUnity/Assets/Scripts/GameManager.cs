@@ -47,7 +47,7 @@ public class GameManager : MonoBehaviour
     public System.Action on_initialized;
     public System.Action<Player> on_player_registered;
     public System.Action<Timeline> on_time_set;
-    public System.Action<Timeline> on_history_change;
+    public System.Action<Timeline, float> on_history_change;
     public System.Action<int, float> on_win;
 
 
@@ -336,9 +336,9 @@ public class GameManager : MonoBehaviour
 
         if (on_time_set != null) on_time_set(line);
     }
-    private void OnHistoryChange(Timeline line)
+    private void OnHistoryChange(Timeline line, float earliest)
     {
-        if (on_history_change != null) on_history_change(line);
+        if (on_history_change != null) on_history_change(line, earliest);
     }
 
 }

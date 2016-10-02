@@ -27,7 +27,7 @@ public class ScoreUI : MonoBehaviour
         win_text.transform.parent.gameObject.SetActive(true);
         win_text.text = gm.player_names[winner].ToUpper() + " WINS";
     }
-    private void OnHistoryChange(Timeline line)
+    private void OnHistoryChange(Timeline line, float earliest)
     {
         UpdateScore();
     }
