@@ -42,7 +42,7 @@ public class Route : MonoBehaviour
         line.SetPosition(0, p1.transform.position);
         line.SetPosition(1, p2.transform.position);
    
-        if (Random.value < 0.25f)
+        if (Random.value < 0.5f)
         {
             quiv_len = 5;
             quiv_t1 = Random.Range(0, 120 - quiv_len*4f);

@@ -18,8 +18,8 @@ public class Player : NetworkBehaviour
     private Planet selected_planet;
 
     // Power
-    private float power_bar_seconds = 15;
-    private int max_power = 4;
+    private float power_bar_seconds = 30;
+    private int max_power = 3;
     private float req_power = 1;
     private float power = 0;
 

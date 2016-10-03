@@ -21,6 +21,18 @@ desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
+UnloadTime: 0.508782 ms
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 2.689699 ms
+
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 406.
+Total: 0.573478 ms (FindLiveObjects: 0.040983 ms CreateObjectMapping: 0.015807 ms MarkObjects: 0.512295 ms  DeleteObjects: 0.003805 ms)
+
+<color=#0000FF>Registered player 0</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
 Initialize engine version: 5.3.5f1 (960ebf59018a)
 GfxDevice: creating device client; threaded=1
 Direct3D:
@@ -44,24 +56,12 @@ desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.463700 ms
+UnloadTime: 0.390223 ms
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.935601 ms
-
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 406.
-Total: 0.558548 ms (FindLiveObjects: 0.028688 ms CreateObjectMapping: 0.012587 ms MarkObjects: 0.513174 ms  DeleteObjects: 0.003805 ms)
-
-<color=#0000FF>Registered player 0</color>
-
- 
-(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
-
-UnloadTime: 0.377342 ms
-Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.768739 ms
+UnloadTime: 2.708434 ms
 
 Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 401.
-Total: 0.289520 ms (FindLiveObjects: 0.015807 ms CreateObjectMapping: 0.010831 ms MarkObjects: 0.259075 ms  DeleteObjects: 0.003220 ms)
+Total: 0.297131 ms (FindLiveObjects: 0.025761 ms CreateObjectMapping: 0.010831 ms MarkObjects: 0.257611 ms  DeleteObjects: 0.002927 ms)
 
 <color=#0000FF>Registered player 1</color>
 
@@ -79,11 +79,7 @@ Total: 0.289520 ms (FindLiveObjects: 0.015807 ms CreateObjectMapping: 0.010831 m
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
 
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 4508 -> priority: 1 
-Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:7777}
-Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 1.797426 ms
-
-Unloading 19 unused Assets to reduce memory usage. Loaded Objects now: 286.
-Total: 0.599825 ms (FindLiveObjects: 0.013466 ms CreateObjectMapping: 0.011416 ms MarkObjects: 0.559134 ms  DeleteObjects: 0.015807 ms)
-
+  Thread -> id: 3a30 -> priority: 1 
+Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:63051}
+Setting up 1 worker threads for Enlighten.
+  Thread -> id: 1688 -> priority: 1 
