@@ -14,19 +14,25 @@ Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUn
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.038 seconds
+- Completed reload, in  0.106 seconds
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.dll (this message is harmless)
 desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
+<RI.Hid> Failed to create device file:
+ 2 The system cannot find the file specified.
+
+ 
+(Filename:  Line: 54)
+
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.508782 ms
+UnloadTime: 0.363583 ms
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.689699 ms
+UnloadTime: 2.664231 ms
 
 Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 406.
-Total: 0.573478 ms (FindLiveObjects: 0.040983 ms CreateObjectMapping: 0.015807 ms MarkObjects: 0.512295 ms  DeleteObjects: 0.003805 ms)
+Total: 0.540106 ms (FindLiveObjects: 0.024590 ms CreateObjectMapping: 0.011709 ms MarkObjects: 0.499707 ms  DeleteObjects: 0.003805 ms)
 
 <color=#0000FF>Registered player 0</color>
 
@@ -49,19 +55,25 @@ Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUn
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
 Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.035 seconds
+- Completed reload, in  0.036 seconds
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\build_Data\Managed\System.dll (this message is harmless)
 desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
+<RI.Hid> Failed to create device file:
+ 2 The system cannot find the file specified.
+
+ 
+(Filename:  Line: 54)
+
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.390223 ms
+UnloadTime: 0.398419 ms
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 2.708434 ms
+UnloadTime: 2.683844 ms
 
 Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 401.
-Total: 0.297131 ms (FindLiveObjects: 0.025761 ms CreateObjectMapping: 0.010831 ms MarkObjects: 0.257611 ms  DeleteObjects: 0.002927 ms)
+Total: 0.299180 ms (FindLiveObjects: 0.016686 ms CreateObjectMapping: 0.011709 ms MarkObjects: 0.267564 ms  DeleteObjects: 0.003220 ms)
 
 <color=#0000FF>Registered player 1</color>
 
@@ -79,7 +91,13 @@ Total: 0.297131 ms (FindLiveObjects: 0.025761 ms CreateObjectMapping: 0.010831 m
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
 
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 3a30 -> priority: 1 
-Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:63051}
+  Thread -> id: 63b8 -> priority: 1 
+Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:7777}
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 1.772543 ms
+
+Unloading 18 unused Assets to reduce memory usage. Loaded Objects now: 286.
+Total: 0.362705 ms (FindLiveObjects: 0.007318 ms CreateObjectMapping: 0.010245 ms MarkObjects: 0.330503 ms  DeleteObjects: 0.014344 ms)
+
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 1688 -> priority: 1 
+  Thread -> id: 2bb8 -> priority: 1 
