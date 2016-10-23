@@ -33,6 +33,4 @@ public class StarManager : MonoBehaviour
         float t = -line.Time / line.GetEndTime();
         transform.rotation = Quaternion.Euler(0, 0, t * 360f * rotations);
     }
-
-
 }
