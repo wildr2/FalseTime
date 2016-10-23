@@ -10,7 +10,7 @@ public class Planet : MonoBehaviour
 
     private Text text;
     public Image raycast_image;
-    public SpriteRenderer sprite_sr, inner_sprite_sr;
+    public SpriteRenderer sprite_sr;
     public SpriteRenderer highlight_sr;
     public MeshRenderer sphere;
 
@@ -42,9 +42,8 @@ public class Planet : MonoBehaviour
         // Size
         Size = size;
         Radius = size / 2.5f;
-        sprite_sr.transform.localScale = Vector3.one * Radius * 2f;
-        //inner_sprite_sr.transform.localScale = Vector3.one * (Radius * 2f - 0.05f);
-        sphere.transform.localScale = Vector3.one * (Radius * 2f - 0.05f);
+        sphere.transform.localScale = Vector3.one * (Radius * 2f);
+        sprite_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
         highlight_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
         raycast_image.transform.localScale = Vector3.one * Radius * 2f;
         
@@ -53,14 +52,17 @@ public class Planet : MonoBehaviour
 
         // Color
         //sphere.material.color = Color.Lerp(Color.Lerp(new Color(Random.value, Random.value, Random.value), Color.white, 0.6f), Color.black, 0f);
-        sphere.material.color = neutral_color; //HsvToRgb(Random.value * 360, 0f, 0.3f);
+        //sphere.material.color = neutral_color; //HsvToRgb(Random.value * 360, 0f, 0.3f);
         //sphere.material.color = Color.Lerp(sprite_sr.color, Color.black, 0.5f);
         text.color = Color.black;
+
+        // Rotation
+        sphere.transform.rotation = Quaternion.Euler(0, Random.value * 360f, 0);
     }
     public void ShowHighlight(Color color)
     {
         highlight_sr.gameObject.SetActive(true);
-        highlight_sr.color = color;
+        highlight_sr.color = Color.Lerp(color, Color.black, 0.5f);
     }
     public void HideHighlight()
     {
@@ -77,9 +79,9 @@ public class Planet : MonoBehaviour
         text.text = pop.ToString();
 
         OwnerID = ownerID;
-        sprite_sr.color = ownerID == -1 ? Color.clear : gm.player_colors[ownerID];
+        sprite_sr.color = ownerID == -1 ? neutral_color : gm.player_colors[ownerID];
         //text.color = ownerID == -1 ? Color.black : sprite_sr.color;
-        text.color = ownerID == -1 ? new Color(0.5f, 0.5f, 0.5f) : sprite_sr.color;
+        text.color = ownerID == -1 ? neutral_color : sprite_sr.color;
         //inner_sprite_sr.color = Color.Lerp(sprite_sr.color, Color.black, 0.8f);
         //sphere.material.color = Color.Lerp(sprite_sr.color, Color.black, 0.5f);
 
@@ -104,6 +106,12 @@ public class Planet : MonoBehaviour
     public void OnPointerExit()
     {
         if (on_pointer_exit != null) on_pointer_exit(this);
+    }
+
+
+    private void Update()
+    {
+        //sphere.transform.Rotate(0, Time.deltaTime * 20, 0);
     }
 
     /// <summary>
@@ -200,6 +208,7 @@ public class Planet : MonoBehaviour
         }
         return new Color(R, G, B);
     }
+ 
 }
 
 

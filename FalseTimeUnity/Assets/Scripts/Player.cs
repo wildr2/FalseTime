@@ -256,7 +256,7 @@ public class Player : NetworkBehaviour
             {
                 // Select planet
                 selected_planet = planet;
-                selected_planet.ShowHighlight(Color.white);
+                selected_planet.ShowHighlight(new Color(0.75f, 0.75f, 0.75f));
             }
         }
         else if (planet != selected_planet)
@@ -298,7 +298,9 @@ public class Player : NetworkBehaviour
             else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] != null)
                 planet.ShowHighlight(Color.red); // Attack
             else
-                planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action
+            {
+                //planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action
+            }
         }
     }
     private void OnPlanetMouseExit(Planet planet)
