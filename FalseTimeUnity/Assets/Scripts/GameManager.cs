@@ -203,10 +203,23 @@ public class GameManager : MonoBehaviour
     }
     private void GeneratePlanets()
     {
-        int n = Random.Range(15, 20);
+        int n = Random.Range(15, 15);
         planets = new Planet[n];
 
+        
+        // Positions
         List<Vector2> positions = GeneratePlanetPositions(n);
+        Vector2 center = new Vector2();
+        foreach (Vector2 pos in positions)
+        {
+            center += pos;
+        }
+        center /= n;
+        for (int i = 0; i < n; ++i)
+        {
+            // shift position to center planets on this object
+            positions[i] += (Vector2)transform.position - center;
+        }
 
         // Create neutral planets
         for (int i = 0; i < n; ++i)
@@ -217,7 +230,7 @@ public class GameManager : MonoBehaviour
             float size = Random.Range(0.75f, 2f);
             int pop = (int)(size * Random.value * 10);
             planet.Initialize(i, size, pop, -1);
-            planet.transform.position = positions[i] * 2.5f;
+            planet.transform.position = positions[i] * 3.5f;
 
             planets[i] = planet;
         }
@@ -256,7 +269,7 @@ public class GameManager : MonoBehaviour
             for (int j = i+1; j < planets.Length; ++j)
             {
                 float dist = planet_dists[i][j];
-                if (dist < 3f)
+                if (dist < 3.5f)
                 {
                     Route route = Instantiate(route_prefab);
                     route.transform.SetParent(transform);
