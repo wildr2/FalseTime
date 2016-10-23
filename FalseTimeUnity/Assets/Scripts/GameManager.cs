@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
     // Debug
     public bool debug_solo = false;
     public bool debug_powers = false;
+    public bool debug_log_tl_remake = false;
 
     // General
     private bool initialized = false;
@@ -227,7 +228,7 @@ public class GameManager : MonoBehaviour
             Planet planet = Instantiate(planet_prefab);
             planet.transform.SetParent(transform);
 
-            float size = Random.Range(0.75f, 2f);
+            float size = Random.Range(0.75f, 2.25f);
             int pop = (int)(size * Random.value * 10);
             planet.Initialize(i, size, pop, -1);
             planet.transform.position = positions[i] * 3.5f;
@@ -242,7 +243,7 @@ public class GameManager : MonoBehaviour
             while (planets[planet_id].OwnerID != -1)
                 planet_id = (planet_id + 1) % planets.Length;
 
-            planets[planet_id].Initialize(planet_id, 1, 10, i);
+            planets[planet_id].Initialize(planet_id, 1.5f, 10, i);
         }
 
         // Store planet distances
@@ -398,6 +399,7 @@ public class PlayerCmd
     public int selected_planet_id;
     public int target_planet_id;
 
+
     public PlayerCmd(float time, int selected_planet_id, int target_planet_id, int player_id)
     {
         this.time = time;
@@ -413,21 +415,31 @@ public class PlayerCmd
         this.player_id = player_id;
     }   
 
-    public Flight TryToApply(WorldState state, int tl_id, Planet[] planets, Route[][] routes)
+    public Flight TryToApply(WorldState state, Timeline line, Planet[] planets, Route[][] routes)
     {
         // Can't send ships from enemy planet
         if (state.planet_ownerIDs[selected_planet_id] != player_id) return null;
+
 
         int ships = Mathf.CeilToInt(state.planet_pops[selected_planet_id] / 2f);
 
         // Can't send less than 1 ship
         if (ships < 1) return null;
 
-        // Create flight
-        bool time_traveling = routes[selected_planet_id][target_planet_id].IsQuivering(time);
 
+        Route route = routes[selected_planet_id][target_planet_id];
+        bool transfer = state.planet_ownerIDs[selected_planet_id] == state.planet_ownerIDs[target_planet_id];
+
+        // Can only send ships without route if between friendly planets
+        if (route == null && !transfer) return null; 
+
+
+        bool time_traveling = route != null && route.IsQuivering(time);
+
+
+        // Create flight
         Flight flight = new Flight(state.planet_ownerIDs[selected_planet_id],
-                ships, planets[selected_planet_id], planets[target_planet_id], time, tl_id);
+                ships, planets[selected_planet_id], planets[target_planet_id], time, line.LineID);
 
         if (time_traveling) flight.flight_type = FlightType.TimeTravelSend;
 

@@ -320,6 +320,8 @@ public class Timeline : MonoBehaviour
 
     private static void UpdateAllTLs(int origin_line_id)
     {
+        bool log = tls[0].gm.debug_log_tl_remake;
+
         // Prep
         for (int i = 0; i < tls.Count; ++i)
         {
@@ -327,16 +329,14 @@ public class Timeline : MonoBehaviour
             if (i != origin_line_id) tls[i].latest_change_time = -1;
         }
 
+        int iteration = 1;
         while (true)
         {
             // Update each timeline
+            if (log) Tools.Log("Remake itr " + iteration);
             for (int i = 0; i < tls.Count; ++i)
             {
-                //if (!tls[i].settled)
-                //{
-                //Tools.Log("TL " + i + " remake");
                 tls[i].RemakeKeyStates();
-                //}
             }
 
             // Post update - check settled, prep next pass
@@ -356,6 +356,8 @@ public class Timeline : MonoBehaviour
                 all_settled = all_settled && tls[i].settled;
             }
             if (all_settled) break;
+
+            ++iteration;
         }
 
         // Timelines up to date
@@ -365,6 +367,8 @@ public class Timeline : MonoBehaviour
             if (tls[i].latest_change_time >= 0)
                 tls[i].OnHistoryChange(tls[i].latest_change_time);
         }
+
+        if (log) Tools.Log("Settled");
     }
     private void RemakeKeyStates()
     {
@@ -390,12 +394,12 @@ public class Timeline : MonoBehaviour
             {
                 // Player command
                 WorldState state = GetState(e.cmd.time);
-                Flight new_flight = e.cmd.TryToApply(state, LineID, gm.planets, gm.planet_routes);
-
-                //Tools.Log(e.cmd.time + " " + (new_flight == null ? "null" : new_flight.flight_type.ToString()));
+                Flight new_flight = e.cmd.TryToApply(state, this, gm.planets, gm.planet_routes);
 
                 if (new_flight != null)
                 {
+                    //Tools.Log("flight: " + e.cmd.time + " " + new_flight.flight_type.ToString());
+
                     // Command is valid in current history
                     e.cmd.valid = true;
                     key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
@@ -410,6 +414,7 @@ public class Timeline : MonoBehaviour
                 }
                 else
                 {
+                    //Tools.Log("invalid flight: " + e.cmd.time + " " + new_flight.flight_type.ToString());
                     e.cmd.valid = false;
                 }
             }
@@ -443,28 +448,35 @@ public class Timeline : MonoBehaviour
     }
     private void CheckSettled()
     {
+        bool log = gm.debug_log_tl_remake;
+
         settled = true;
         for (int i = 0; i < Mathf.Max(next_fwd_key_events.Count, fwd_key_events.Count); ++i)
         {
             if (i >= next_fwd_key_events.Count)
             {
                 latest_change_time = Mathf.Min(latest_change_time, fwd_key_events.Keys[i]);
+                if (log) Tools.Log("Discrepency at " + latest_change_time + " (removed events)");
                 settled = false; break;
             }
             if (i >= fwd_key_events.Count)
             {
                 latest_change_time = Mathf.Min(latest_change_time, next_fwd_key_events.Keys[i]);
+                if (log) Tools.Log("Discrepency at " + latest_change_time + " (new events)");
                 settled = false; break;
             }
             if (next_fwd_key_events.Keys[i] != fwd_key_events.Keys[i])
             {
                 latest_change_time = Mathf.Min(latest_change_time, Mathf.Min(fwd_key_events.Keys[i], next_fwd_key_events.Keys[i]));
+                if (log) Tools.Log("Discrepency at " + latest_change_time + " (event time)");
                 settled = false; break;
             }
             if (next_fwd_key_events.Values[i].flight.ships != fwd_key_events.Values[i].flight.ships)
             {
                 //Tools.Log(prev_fwd_key_events.Values[i].flight.ships + " != " + fwd_key_events.Values[i].flight.ships);
                 latest_change_time = Mathf.Min(latest_change_time, fwd_key_events.Keys[i]);
+                if (log) Tools.Log("Discrepency at " + latest_change_time + string.Format(" (ship numbers: {0} vs {1})",
+                    fwd_key_events.Values[i].flight.ships, next_fwd_key_events.Values[i].flight.ships));
                 settled = false; break;
             }
         }
