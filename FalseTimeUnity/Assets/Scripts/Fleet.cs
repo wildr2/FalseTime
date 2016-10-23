@@ -12,7 +12,6 @@ public class Fleet : MonoBehaviour
 
     public void Initialize(int ownerID, int number_of_ships, Color player_color)
     {
-        Tools.Log("fleet init");
         text = GetComponentInChildren<Text>();
 
         OwnerID = ownerID;

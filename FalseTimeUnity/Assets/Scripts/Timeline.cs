@@ -585,11 +585,13 @@ public class Timeline : MonoBehaviour
             // Set marker color 
             if (cmd.valid)
             {
-                marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0);
+                marker.GetComponent<Image>().color = color;
             }
             else
             {
-                marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0.5f);
+                Tools.Log("invalid cmd at " + cmd.time);
+                marker.GetComponent<Image>().color = color;
+                marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 30);
             }
         }
     }
@@ -608,6 +610,7 @@ public class Timeline : MonoBehaviour
             
             yield return null;
         }
+        marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 1);
 
         if (marker == null) yield break;
 
