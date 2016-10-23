@@ -8,12 +8,10 @@ public class Timeline : MonoBehaviour
 {
     public int LineID { get; private set; }
 
-    // Debug
-    public bool log_states = false;
-
     // References
     private GameManager gm;
     private CamController cam;
+    private static List<Timeline> tls = new List<Timeline>();
 
     // UI
     private bool focused = true;
@@ -38,6 +36,9 @@ public class Timeline : MonoBehaviour
     private float latest_cmd_time;
 
     private SortedList<float, TLEvent> fwd_key_events;
+    private SortedList<float, TLEvent> next_fwd_key_events;
+    private bool settled = false;
+    private float latest_change_time = 0; // earliest time affected by latest change
 
 
     // Events
@@ -111,10 +112,12 @@ public class Timeline : MonoBehaviour
     public void Initialize(int id)
     {
         LineID = id;
+        tls.Add(this);
 
         // Create initial history
         state_0 = new WorldState(0, gm.planets);
         fwd_key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
+        next_fwd_key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
 
         // Rotate starting planets
         for (int i = 0; i < state_0.planet_ownerIDs.Length; ++i)
@@ -126,7 +129,7 @@ public class Timeline : MonoBehaviour
             }
         }
 
-        RemakeKeyStates(0);
+        RemakeKeyStates();
     }
     public void SetTime(float time)
     {
@@ -160,7 +163,10 @@ public class Timeline : MonoBehaviour
         cmd.cmd_id = ++latest_cmd_id;
         latest_cmd_time = cmd.time;
         SaveCommand(cmd);
-        RemakeKeyStates(latest_cmd_time);
+
+        latest_change_time = latest_cmd_time;
+        UpdateAllTLs(LineID);
+
         if (gm.CurrentTimeline == this) LoadState(GetState(Time));
     }
 
@@ -284,11 +290,87 @@ public class Timeline : MonoBehaviour
         }
         return node;
     }
-    //private void RemakeKeyStates()
-    //{
-    //    RemakeKeyStates(new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>()));
-    //}
-    private void RemakeKeyStates(float earliest_change)
+    private void ApplyFlightEnd(WorldState state, Flight flight, out bool scored)
+    {
+        scored = false;
+        state.flights.Remove(flight);
+
+        if (flight.flight_type == FlightType.TimeTravelSend) return;
+
+        if (flight.owner_id == state.planet_ownerIDs[flight.end_planet_id])
+        {
+            // Transfer
+            state.planet_pops[flight.end_planet_id] += flight.ships;
+        }
+        else
+        {
+            // Attack
+            int new_pop = state.planet_pops[flight.end_planet_id] - flight.ships;
+            if (new_pop >= 0) state.planet_pops[flight.end_planet_id] = new_pop;
+            else
+            {
+                // Allegiance change
+                new_pop = state.planet_pops[flight.end_planet_id] + flight.ships;
+                if (state.planet_ownerIDs[flight.end_planet_id] != -1) scored = true;
+                state.planet_pops[flight.end_planet_id] = new_pop;
+                state.planet_ownerIDs[flight.end_planet_id] = flight.owner_id;
+            }
+        }
+    }
+
+    private static void UpdateAllTLs(int origin_line_id)
+    {
+        bool log = tls[0].gm.debug_log_tl_remake;
+
+        // Prep
+        for (int i = 0; i < tls.Count; ++i)
+        {
+            tls[i].settled = false;
+            if (i != origin_line_id) tls[i].latest_change_time = -1;
+        }
+
+        int iteration = 1;
+        while (true)
+        {
+            // Update each timeline
+            if (log) Tools.Log("Remake itr " + iteration);
+            for (int i = 0; i < tls.Count; ++i)
+            {
+                tls[i].RemakeKeyStates();
+            }
+
+            // Post update - check settled, prep next pass
+            for (int i = 0; i < tls.Count; ++i)
+            {
+                tls[i].CheckSettled(); // updates latest change time and settled
+                //Tools.Log("TL " + i + " next: " + tls[i].next_fwd_key_events.Count + " settled: " + tls[i].settled);
+                tls[i].fwd_key_events = tls[i].next_fwd_key_events;
+                tls[i].next_fwd_key_events = new SortedList<float, TLEvent>(
+                    new DuplicateKeyComparer<float>());
+            }
+
+            // Termination (are all timelines settled)
+            bool all_settled = true;
+            for (int i = 0; i < tls.Count; ++i)
+            {
+                all_settled = all_settled && tls[i].settled;
+            }
+            if (all_settled) break;
+
+            ++iteration;
+        }
+
+        // Timelines up to date
+        for (int i = 0; i < tls.Count; ++i)
+        {
+            // Event
+            if (tls[i].latest_change_time >= 0)
+                tls[i].OnHistoryChange(tls[i].latest_change_time);
+        }
+
+        if (log) Tools.Log("Settled");
+    }
+    private void RemakeKeyStates()
     {
         // Delete old key states
         key_states.Clear();
@@ -297,13 +379,10 @@ public class Timeline : MonoBehaviour
         SaveKeyState(state_0);
 
         // Create other key states
-        SortedList<float, TLEvent> prev_fwd_key_events = fwd_key_events;
-        fwd_key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
-
         SortedList<float, TLEvent> key_events = new SortedList<float, TLEvent>(new DuplicateKeyComparer<float>());
-        foreach (KeyValuePair<float, TLEvent> kv in prev_fwd_key_events) key_events.Add(kv.Key, kv.Value);
+        foreach (KeyValuePair<float, TLEvent> kv in fwd_key_events) key_events.Add(kv.Key, kv.Value);
         foreach (PlayerCmd cmd in player_cmds) key_events.Add(cmd.time, new TLECmd(cmd));
-        
+
 
         while (key_events.Count > 0)
         {
@@ -315,12 +394,12 @@ public class Timeline : MonoBehaviour
             {
                 // Player command
                 WorldState state = GetState(e.cmd.time);
-                Flight new_flight = e.cmd.TryToApply(state, gm.planets, gm.planet_routes);
-
-                //Tools.Log(e.cmd.time + " " + (new_flight == null ? "null" : new_flight.flight_type.ToString()));
+                Flight new_flight = e.cmd.TryToApply(state, this, gm.planets, gm.planet_routes);
 
                 if (new_flight != null)
                 {
+                    //Tools.Log("flight: " + e.cmd.time + " " + new_flight.flight_type.ToString());
+
                     // Command is valid in current history
                     e.cmd.valid = true;
                     key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
@@ -328,12 +407,14 @@ public class Timeline : MonoBehaviour
                     if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past or future
                     {
                         Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
-                        fwd_key_events.Add(recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
+                        tls[recv_flight.tl_id].next_fwd_key_events.Add(
+                            recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
                     }
                     SaveKeyState(state);
                 }
                 else
                 {
+                    //Tools.Log("invalid flight: " + e.cmd.time + " " + new_flight.flight_type.ToString());
                     e.cmd.valid = false;
                 }
             }
@@ -364,71 +445,39 @@ public class Timeline : MonoBehaviour
                 }
             }
         }
+    }
+    private void CheckSettled()
+    {
+        bool log = gm.debug_log_tl_remake;
 
-        // Determine if another pass is needed (and the earliest time of change)
-        bool settled = true;
-        for (int i = 0; i < Mathf.Max(prev_fwd_key_events.Count, fwd_key_events.Count); ++i)
+        settled = true;
+        for (int i = 0; i < Mathf.Max(next_fwd_key_events.Count, fwd_key_events.Count); ++i)
         {
-            if (i >= prev_fwd_key_events.Count)
+            if (i >= next_fwd_key_events.Count)
             {
-                earliest_change = Mathf.Min(earliest_change, fwd_key_events.Keys[i]);
+                latest_change_time = Mathf.Min(latest_change_time, fwd_key_events.Keys[i]);
+                if (log) Tools.Log("Discrepency at " + latest_change_time + " (removed events)");
                 settled = false; break;
             }
             if (i >= fwd_key_events.Count)
             {
-                earliest_change = Mathf.Min(earliest_change, prev_fwd_key_events.Keys[i]);
+                latest_change_time = Mathf.Min(latest_change_time, next_fwd_key_events.Keys[i]);
+                if (log) Tools.Log("Discrepency at " + latest_change_time + " (new events)");
                 settled = false; break;
             }
-            if (prev_fwd_key_events.Keys[i] != fwd_key_events.Keys[i])
+            if (next_fwd_key_events.Keys[i] != fwd_key_events.Keys[i])
             {
-                earliest_change = Mathf.Min(earliest_change, Mathf.Min(fwd_key_events.Keys[i], prev_fwd_key_events.Keys[i]));
+                latest_change_time = Mathf.Min(latest_change_time, Mathf.Min(fwd_key_events.Keys[i], next_fwd_key_events.Keys[i]));
+                if (log) Tools.Log("Discrepency at " + latest_change_time + " (event time)");
                 settled = false; break;
             }
-            if (prev_fwd_key_events.Values[i].flight.ships != fwd_key_events.Values[i].flight.ships)
+            if (next_fwd_key_events.Values[i].flight.ships != fwd_key_events.Values[i].flight.ships)
             {
                 //Tools.Log(prev_fwd_key_events.Values[i].flight.ships + " != " + fwd_key_events.Values[i].flight.ships);
-                earliest_change = Mathf.Min(earliest_change, fwd_key_events.Keys[i]);
+                latest_change_time = Mathf.Min(latest_change_time, fwd_key_events.Keys[i]);
+                if (log) Tools.Log("Discrepency at " + latest_change_time + string.Format(" (ship numbers: {0} vs {1})",
+                    fwd_key_events.Values[i].flight.ships, next_fwd_key_events.Values[i].flight.ships));
                 settled = false; break;
-            }
-        }
-        if (!settled)
-        {
-            // Another pass needed
-            //Tools.Log("next pass");
-            RemakeKeyStates(earliest_change);
-            return;
-        }
-
-        // Event
-        OnHistoryChange(earliest_change);
-
-        // Debug
-        if (log_states) LogStates();
-    }
-    private void ApplyFlightEnd(WorldState state, Flight flight, out bool scored)
-    {
-        scored = false;
-        state.flights.Remove(flight);
-
-        if (flight.flight_type == FlightType.TimeTravelSend) return;
-
-        if (flight.owner_id == state.planet_ownerIDs[flight.end_planet_id])
-        {
-            // Transfer
-            state.planet_pops[flight.end_planet_id] += flight.ships;
-        }
-        else
-        {
-            // Attack
-            int new_pop = state.planet_pops[flight.end_planet_id] - flight.ships;
-            if (new_pop >= 0) state.planet_pops[flight.end_planet_id] = new_pop;
-            else
-            {
-                // Allegiance change
-                new_pop = state.planet_pops[flight.end_planet_id] + flight.ships;
-                if (state.planet_ownerIDs[flight.end_planet_id] != -1) scored = true;
-                state.planet_pops[flight.end_planet_id] = new_pop;
-                state.planet_ownerIDs[flight.end_planet_id] = flight.owner_id;
             }
         }
     }
@@ -536,11 +585,13 @@ public class Timeline : MonoBehaviour
             // Set marker color 
             if (cmd.valid)
             {
-                marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0);
+                marker.GetComponent<Image>().color = color;
             }
             else
             {
-                marker.GetComponent<Image>().color = Color.Lerp(color, Color.black, 0.5f);
+                Tools.Log("invalid cmd at " + cmd.time);
+                marker.GetComponent<Image>().color = color;
+                marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 30);
             }
         }
     }
@@ -559,6 +610,7 @@ public class Timeline : MonoBehaviour
             
             yield return null;
         }
+        marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 1);
 
         if (marker == null) yield break;
 
@@ -584,25 +636,6 @@ public class Timeline : MonoBehaviour
         }
 
         Destroy(marker.gameObject);
-    }
-
-    // Debug
-    private void LogStates()
-    {
-        foreach (WorldState state in key_states)
-        {
-            string s = "STATE " + state.time + "\n";
-            for (int i = 0; i < state.planet_pops.Length; ++i)
-            {
-                s += "Planet " + i + "(" + state.planet_ownerIDs[i] + "): " + state.planet_pops[i] + "\n";
-            }
-            for (int i = 0; i < state.flights.Count; ++i)
-            {
-                s += "Flight " + "\n";
-            }
-            s += "\n";
-            Tools.Log(s);
-        }
     }
 
 

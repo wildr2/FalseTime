@@ -17,7 +17,10 @@ public class Fleet : MonoBehaviour
         OwnerID = ownerID;
         sprite_sr.color = player_color;
         text.text = number_of_ships.ToString();
-        transform.localScale = Vector3.one * (0.8f + number_of_ships / 50f);
+
+        Vector3 scale = Vector3.one * (0.8f + number_of_ships / 50f);
+        scale.z = 1;
+        transform.localScale = scale;
     }
     public void SetPosition(Planet from, Planet to, float progress)
     {
@@ -25,7 +28,9 @@ public class Fleet : MonoBehaviour
         Vector2 p0 = (Vector2)from.transform.position + dir * (from.Radius + 0.3f);
         Vector2 p1 = (Vector2)to.transform.position - dir * (to.Radius + 0.3f);
 
-        transform.position = Vector3.Lerp(p0, p1, progress);
+        Vector3 pos = Vector2.Lerp(p0, p1, progress);
+
+        transform.position = pos;
         sprite_sr.transform.rotation = LookRotation2D(dir, -90);
     }
     public void SetAlpha(float a)

@@ -18,8 +18,8 @@ public class Player : NetworkBehaviour
     private Planet selected_planet;
 
     // Power
-    private float power_bar_seconds = 15;
-    private int max_power = 4;
+    private float power_bar_seconds = 30;
+    private int max_power = 3;
     private float req_power = 1;
     private float power = 0;
 
@@ -145,7 +145,8 @@ public class Player : NetworkBehaviour
 
                             int ships_to_send = Mathf.CeilToInt(state.planet_pops[i] / 2f);
 
-                            if (projected_state.planet_ownerIDs[j] == player_id) continue; // skip transfers
+                            if (state.planet_ownerIDs[j] == player_id) continue; // skip transfers
+                            if (projected_state.planet_ownerIDs[j] == player_id) continue; // skip transfers (attacks that become transfers)
                             if (ships_to_send < projected_state.planet_pops[j] + 2) continue; // skip non takeovers
                             
 
@@ -250,30 +251,50 @@ public class Player : NetworkBehaviour
     {
         if (!gm.IsGamePlaying()) return;
 
-        if (selected_planet == null || gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] == null)
+        if (selected_planet == null)
         {
             if (planet.OwnerID == player_id || gm.debug_solo)
             {
                 // Select planet
                 selected_planet = planet;
-                selected_planet.ShowHighlight(Color.white);
+                selected_planet.ShowHighlight(new Color(0.75f, 0.75f, 0.75f));
             }
         }
         else if (planet != selected_planet)
         {
-            if (power >= req_power)
+            if (planet.OwnerID == selected_planet.OwnerID)
             {
-                // Issue player command 
-                CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
-                    planet.PlanetID, gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
+                // Transfer
+                // Attack along route
+                if (power >= req_power)
+                {
+                    // Issue player command 
+                    CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
+                        planet.PlanetID, gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
 
-                // Cost
-                SetPower(power - req_power);
+                    // Cost
+                    SetPower(power - req_power);
 
-                // UI
-                DeselectPlanet();
+                    // UI
+                    DeselectPlanet();
+                }
             }
-            
+            else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] != null)
+            {
+                // Attack along route
+                if (power >= req_power)
+                {
+                    // Issue player command 
+                    CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
+                        planet.PlanetID, gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
+
+                    // Cost
+                    SetPower(power - req_power);
+
+                    // UI
+                    DeselectPlanet();
+                }
+            }
         }
     }
     private void OnPlanetMouseEnter(Planet planet)
@@ -298,7 +319,9 @@ public class Player : NetworkBehaviour
             else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] != null)
                 planet.ShowHighlight(Color.red); // Attack
             else
-                planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action
+            {
+                //planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action
+            }
         }
     }
     private void OnPlanetMouseExit(Planet planet)

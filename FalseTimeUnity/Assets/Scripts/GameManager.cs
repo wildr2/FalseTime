@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
     // Debug
     public bool debug_solo = false;
     public bool debug_powers = false;
+    public bool debug_log_tl_remake = false;
 
     // General
     private bool initialized = false;
@@ -203,10 +204,23 @@ public class GameManager : MonoBehaviour
     }
     private void GeneratePlanets()
     {
-        int n = Random.Range(15, 20);
+        int n = Random.Range(15, 15);
         planets = new Planet[n];
 
+        
+        // Positions
         List<Vector2> positions = GeneratePlanetPositions(n);
+        Vector2 center = new Vector2();
+        foreach (Vector2 pos in positions)
+        {
+            center += pos;
+        }
+        center /= n;
+        for (int i = 0; i < n; ++i)
+        {
+            // shift position to center planets on this object
+            positions[i] += (Vector2)transform.position - center;
+        }
 
         // Create neutral planets
         for (int i = 0; i < n; ++i)
@@ -214,10 +228,10 @@ public class GameManager : MonoBehaviour
             Planet planet = Instantiate(planet_prefab);
             planet.transform.SetParent(transform);
 
-            float size = Random.Range(0.75f, 2f);
+            float size = Random.Range(0.75f, 2.25f);
             int pop = (int)(size * Random.value * 10);
             planet.Initialize(i, size, pop, -1);
-            planet.transform.position = positions[i] * 2.5f;
+            planet.transform.position = positions[i] * 3.5f;
 
             planets[i] = planet;
         }
@@ -229,7 +243,7 @@ public class GameManager : MonoBehaviour
             while (planets[planet_id].OwnerID != -1)
                 planet_id = (planet_id + 1) % planets.Length;
 
-            planets[planet_id].Initialize(planet_id, 1, 10, i);
+            planets[planet_id].Initialize(planet_id, 1.5f, 10, i);
         }
 
         // Store planet distances
@@ -256,7 +270,7 @@ public class GameManager : MonoBehaviour
             for (int j = i+1; j < planets.Length; ++j)
             {
                 float dist = planet_dists[i][j];
-                if (dist < 3f)
+                if (dist < 3.5f)
                 {
                     Route route = Instantiate(route_prefab);
                     route.transform.SetParent(transform);
@@ -385,6 +399,7 @@ public class PlayerCmd
     public int selected_planet_id;
     public int target_planet_id;
 
+
     public PlayerCmd(float time, int selected_planet_id, int target_planet_id, int player_id)
     {
         this.time = time;
@@ -400,21 +415,31 @@ public class PlayerCmd
         this.player_id = player_id;
     }   
 
-    public Flight TryToApply(WorldState state, Planet[] planets, Route[][] routes)
+    public Flight TryToApply(WorldState state, Timeline line, Planet[] planets, Route[][] routes)
     {
         // Can't send ships from enemy planet
         if (state.planet_ownerIDs[selected_planet_id] != player_id) return null;
+
 
         int ships = Mathf.CeilToInt(state.planet_pops[selected_planet_id] / 2f);
 
         // Can't send less than 1 ship
         if (ships < 1) return null;
 
-        // Create flight
-        bool time_traveling = routes[selected_planet_id][target_planet_id].IsQuivering(time);
 
+        Route route = routes[selected_planet_id][target_planet_id];
+        bool transfer = state.planet_ownerIDs[selected_planet_id] == state.planet_ownerIDs[target_planet_id];
+
+        // Can only send ships without route if between friendly planets
+        if (route == null && !transfer) return null; 
+
+
+        bool time_traveling = route != null && route.IsQuivering(time);
+
+
+        // Create flight
         Flight flight = new Flight(state.planet_ownerIDs[selected_planet_id],
-                ships, planets[selected_planet_id], planets[target_planet_id], time);
+                ships, planets[selected_planet_id], planets[target_planet_id], time, line.LineID);
 
         if (time_traveling) flight.flight_type = FlightType.TimeTravelSend;
 
@@ -435,8 +460,9 @@ public class Flight
     public int end_planet_id;
     public float start_time, end_time;
     public FlightType flight_type = FlightType.Normal;
+    public int tl_id;
 
-    public Flight(int owner_id, int ships, Planet start_planet, Planet end_planet, float start_time)
+    public Flight(int owner_id, int ships, Planet start_planet, Planet end_planet, float start_time, int tl_id)
     {
         this.owner_id = owner_id;
         this.ships = ships;
@@ -448,6 +474,7 @@ public class Flight
 
         this.start_time = start_time;
         end_time = start_time + dist / speed;
+        this.tl_id = tl_id;
     }
     public Flight(Flight to_copy)
     {
@@ -458,6 +485,7 @@ public class Flight
         start_time = to_copy.start_time;
         end_time = to_copy.end_time;
         flight_type = to_copy.flight_type;
+        tl_id = to_copy.tl_id;
     }
     public static Flight MakeRecvFlight(Flight send_flight, Route[][] routes)
     {
@@ -465,6 +493,9 @@ public class Flight
         f.flight_type = FlightType.TimeTravelRecv;
         f.start_time = routes[f.start_planet_id][f.end_planet_id].GetTimeTravelTime(send_flight.start_time);
         f.end_time = f.start_time + (send_flight.end_time - send_flight.start_time);
+
+        if (routes[f.start_planet_id][f.end_planet_id].IsCrossing()) f.tl_id = 1 - f.tl_id;
+
         return f;
     }
 

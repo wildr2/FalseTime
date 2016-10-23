@@ -37,7 +37,7 @@ public class TimeChangeScreen : MonoBehaviour
 
     private void OnHistoryChange(Timeline line, float earliest)
     {
-        Tools.Log(earliest);
+        //Tools.Log("line " + line.LineID + ": " + earliest);
         earliest_change = earliest;
 
         // only flash if more than 0.1 seconds ahead of change
