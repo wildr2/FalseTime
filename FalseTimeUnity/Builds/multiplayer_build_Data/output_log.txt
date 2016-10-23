@@ -1,0 +1,93 @@
+Initialize engine version: 5.4.1f1 (649f48bbbf0f)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: NVIDIA GeForce GTX 970 (ID=0x13c2)
+    Vendor:   NVIDIA
+    VRAM:     3072 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+- Completed reload, in  0.037 seconds
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\System.dll (this message is harmless)
+desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+Initialize engine version: 5.4.1f1 (649f48bbbf0f)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: NVIDIA GeForce GTX 970 (ID=0x13c2)
+    Vendor:   NVIDIA
+    VRAM:     3072 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+- Completed reload, in  0.035 seconds
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Robert\_KEEP\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\multiplayer_build_Data\Managed\System.dll (this message is harmless)
+desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 0.581968 ms
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 2.594562 ms
+
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1626.
+Total: 0.716922 ms (FindLiveObjects: 0.088115 ms CreateObjectMapping: 0.031030 ms MarkObjects: 0.592800 ms  DeleteObjects: 0.004683 ms)
+
+<color=#0000FF>Registered player 0</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+UnloadTime: 0.529861 ms
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 2.590171 ms
+
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1621.
+Total: 0.537472 ms (FindLiveObjects: 0.055620 ms CreateObjectMapping: 0.019906 ms MarkObjects: 0.455504 ms  DeleteObjects: 0.006147 ms)
+
+<color=#0000FF>Registered player 1</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+<color=#0000FF>Registered player 0</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+<color=#0000FF>Registered player 1</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+Setting up 1 worker threads for Enlighten.
+  Thread -> id: 2388 -> priority: 1 
+Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:7777}
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 2.266107 ms
+
+Unloading 39 unused Assets to reduce memory usage. Loaded Objects now: 287.
+Total: 0.497366 ms (FindLiveObjects: 0.008782 ms CreateObjectMapping: 0.012295 ms MarkObjects: 0.431500 ms  DeleteObjects: 0.044496 ms)
+
+Joystick disconnected ("Controller (Xbox One For Windows)").
+ 
+(Filename:  Line: 1260)
+
