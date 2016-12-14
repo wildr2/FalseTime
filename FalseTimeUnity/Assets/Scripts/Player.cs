@@ -103,7 +103,7 @@ public class Player : NetworkBehaviour
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.Tab))
+            if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Space))
             {
                 // Switch timeline
                 gm.SwitchTimeline();

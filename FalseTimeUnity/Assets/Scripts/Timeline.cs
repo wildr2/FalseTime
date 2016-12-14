@@ -21,11 +21,12 @@ public class Timeline : MonoBehaviour
     public Text clock, win_text, score_text, score_marker_prefab;
 
     // Interaction
-    private bool paused = true;
+    private float scrape_speed = 30;
+    private float scrape_speed_fast = 60;
 
     // Time
     public float Time { get; private set; }
-    private float time_length = 120;
+    private float time_length = 100;
 
     // History
     private WorldState state_0;
@@ -153,13 +154,13 @@ public class Timeline : MonoBehaviour
     }
     public void SetTime(float time)
     {
-        Time = time;
+        Time = Mathf.Clamp(time, 0, time_length);
 
         // Load state
-        LoadState(GetState(time));
+        LoadState(GetState(Time));
 
         // UI
-        SetMarkerPosition(knob, time);
+        SetMarkerPosition(knob, Time);
         UpdateClock();
 
         // Event
@@ -200,7 +201,7 @@ public class Timeline : MonoBehaviour
         // Events
         gm = FindObjectOfType<GameManager>();
         gm.on_win += OnWin;
-        gm.on_time_set += OnTimeSet;
+        gm.on_time_set += OnTimeSet; // any timeline time set
 
         // UI
         SetMarkerPosition(knob, 0);
@@ -223,15 +224,18 @@ public class Timeline : MonoBehaviour
             SetTime(TimeFromMousePos(x));
         }
 
-        // Play / Pause
-        if (Input.GetKeyDown(KeyCode.Space))
-            paused = !paused;
-
-        if (!paused)
+        // Timeline scrape key input
+        if (focused)
         {
-            SetTime(Time + UnityEngine.Time.deltaTime);
-            SetMarkerPosition(knob, Time);
+            float scrape = Input.GetAxis("Horizontal");
+            if (Mathf.Abs(scrape) > 0.5f)
+            {
+                float speed = Input.GetKey(KeyCode.LeftShift) ? scrape_speed_fast : scrape_speed;
+                SetTime(Time + scrape * UnityEngine.Time.deltaTime * speed);
+                SetMarkerPosition(knob, Time);
+            }
         }
+        
     }
 
     // General World State
@@ -550,7 +554,7 @@ public class Timeline : MonoBehaviour
         UpdateHistoryMarkers();
         if (on_history_change != null) on_history_change(this, earliest);
     }
-    private void OnTimeSet(Timeline line)
+    private void OnTimeSet(Timeline line) // any timeline
     {
         if (line == this && !focused)
         {
@@ -637,7 +641,7 @@ public class Timeline : MonoBehaviour
     }
     private void UpdateClock()
     {
-        clock.text = Tools.FormatTimeAsMinSec(Time);
+        clock.text = ((int)Time).ToString("D3");
     }
     private IEnumerator FlashMarker(RectTransform marker)
     {

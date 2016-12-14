@@ -377,6 +377,7 @@ public class GameManager : MonoBehaviour
             CurrentTimeline = line;
             UpdateFlags();
         }
+        if (on_time_set != null) on_time_set(line);
     }
     private void OnHistoryChange(Timeline line, float earliest)
     {
