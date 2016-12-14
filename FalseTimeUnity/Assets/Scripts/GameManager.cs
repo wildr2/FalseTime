@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     // General
     private bool initialized = false;
     private bool game_over = false;
-    private int points_to_win = 25;
+    private int points_to_win;
 
     // Timelines
     public Timeline CurrentTimeline { get; private set; }
@@ -35,7 +35,7 @@ public class GameManager : MonoBehaviour
     public Transform connection_screen;
 
     // Planets
-    private int num_planets = 15;
+    public int num_planets = 50;
     [System.NonSerialized] public Planet[] planets; // indexed by planet id
     public Planet planet_prefab;
     public Route route_prefab;
@@ -206,8 +206,8 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Force score update...
-        //OnHistoryChange(CurrentTimeline, 0);
+        // Scores
+        points_to_win = (int)(num_planets * 1.8f);
     }
     private IEnumerator GenerateWorld()
     {
@@ -277,7 +277,8 @@ public class GameManager : MonoBehaviour
             while (planets[planet_id].OwnerID != -1)
                 planet_id = (planet_id + 1) % planets.Length;
 
-            planets[planet_id].Initialize(planet_id, 1.5f, 10, i);
+            planets[planet_id].SetSize(1.5f);
+            planets[planet_id].SetPop(10, i);
         }
 
         // Store planet distances

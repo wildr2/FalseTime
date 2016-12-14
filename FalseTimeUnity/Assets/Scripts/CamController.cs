@@ -8,7 +8,7 @@ public class CamController : MonoBehaviour
 
     // Zoom
     private float zoom, target_zoom = 1f; // 0 to 1 (0 being zoomed in)
-    private const float min_ortho = 3, max_ortho = 10;
+    private const float min_ortho = 3, max_ortho = 18;
     private const float zoom_speed = 50f;
     private const float zoom_lerp_speed = 10f;
 

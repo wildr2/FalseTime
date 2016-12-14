@@ -13,7 +13,10 @@ public class Planet : MonoBehaviour
     public SpriteRenderer sprite_sr;
     public SpriteRenderer highlight_sr;
     public MeshRenderer sphere;
-    public Image[] flags;
+
+    public Transform flags_parent;
+    public Image flag_prefab;
+    private Image[] flags;
 
     public int PlanetID { get; private set; }
     public float Radius { get; private set; }
@@ -42,13 +45,8 @@ public class Planet : MonoBehaviour
         PlanetID = id;
 
         // Size
-        Size = size;
-        Radius = size / 2.5f;
-        sphere.transform.localScale = Vector3.one * (Radius * 2f);
-        sprite_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
-        highlight_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
-        raycast_image.transform.localScale = Vector3.one * Radius * 2f;
-        
+        SetSize(size);
+
         // Pop
         SetPop(pop, ownerID);
 
@@ -61,8 +59,25 @@ public class Planet : MonoBehaviour
         sphere.transform.rotation = Quaternion.Euler(0, Random.value * 360f, 0);
 
         // Flags
-        foreach (Image flag in flags) flag.gameObject.SetActive(false);
+        flags = new Image[gm.GetNumPlayers()];
+        for (int i = 0; i < flags.Length; ++i)
+        {
+            flags[i] = Instantiate(flag_prefab);
+            flags[i].transform.SetParent(flags_parent, false);
+            flags[i].color = gm.player_colors[i];
+            flags[i].gameObject.SetActive(false);
+        }
     }
+    public void SetSize(float size)
+    {
+        Size = size;
+        Radius = size / 2.5f;
+        sphere.transform.localScale = Vector3.one * (Radius * 2f);
+        sprite_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
+        highlight_sr.transform.localScale = Vector3.one * (Radius * 2f + 0.05f);
+        raycast_image.transform.localScale = Vector3.one * Radius * 2f;
+    }
+
     public void ShowHighlight(Color color)
     {
         highlight_sr.gameObject.SetActive(true);
