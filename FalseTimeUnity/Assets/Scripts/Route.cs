@@ -61,8 +61,8 @@ public class Route : MonoBehaviour
         if (Random.value < 0.5f)
         {
             quiv_len = 5;
-            quiv_t1 = Random.Range(0, 120 - quiv_len * 4f);
-            quiv_t2 = Random.Range(quiv_t1 + quiv_len, 120 - quiv_len);
+            quiv_t1 = Random.Range(0, 100 - quiv_len * 7f); // hardcoded tl length
+            quiv_t2 = Random.Range(quiv_t1 + quiv_len * 3f, 100 - quiv_len);
 
             if (Random.value < 0.5f)
             {
