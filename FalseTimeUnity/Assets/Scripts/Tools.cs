@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System;
 
 
-public class Tools
+public static class Tools
 {
     // Trig
     public static Vector2 Perpendicular(Vector2 v)
@@ -241,6 +241,14 @@ public class Tools
             GameObject.Destroy(transform.GetChild(i).gameObject);
         }
         transform.DetachChildren();
+    }
+
+    public static void Populate<T>(this T[] arr, T value)
+    {
+        for (int i = 0; i < arr.Length; i++)
+        {
+            arr[i] = value;
+        }
     }
 
     // Color

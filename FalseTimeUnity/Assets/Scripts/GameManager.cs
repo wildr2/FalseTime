@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     // General
     private bool initialized = false;
     private bool game_over = false;
-    private int points_to_win = 10;
+    private int points_to_win = 25;
 
     // Timelines
     public Timeline CurrentTimeline { get; private set; }
@@ -26,7 +26,8 @@ public class GameManager : MonoBehaviour
 
     private int players_registered = 0;
     public Dictionary<int, Player> players; // keys are player ids
-    private Dictionary<int, int> player_scores;
+    private int[] player_scores;
+    private bool[][][] player_conquests;
 
     // References
     public SeedManager seed_manager;
@@ -34,11 +35,13 @@ public class GameManager : MonoBehaviour
     public Transform connection_screen;
 
     // Planets
+    private int num_planets = 15;
     [System.NonSerialized] public Planet[] planets; // indexed by planet id
     public Planet planet_prefab;
     public Route route_prefab;
     [System.NonSerialized] public float[][] planet_dists;
     [System.NonSerialized] public Route[][] planet_routes;
+    private bool[] planets_ready;
 
     // Fleets
     [System.NonSerialized] public List<Fleet> fleets;
@@ -97,7 +100,7 @@ public class GameManager : MonoBehaviour
         return players;
     }
     public int GetPlayerScore(Player player)
-    {
+    {   
         return player_scores[player.player_id];
     }
     public int GetWinner(int line, float time)
@@ -121,7 +124,6 @@ public class GameManager : MonoBehaviour
     public void RegisterPlayer(Player player)
     {
         players[player.player_id] = player;
-        player_scores[player.player_id] = 0;
         ++players_registered;
 
         if (on_player_registered != null) on_player_registered(player);
@@ -132,7 +134,18 @@ public class GameManager : MonoBehaviour
     }
     public void GivePoint(int player_id)
     {
-        player_scores[player_id] += 1;
+        //player_scores[player_id] += 1;
+    }
+    public void MarkConquest(int player_id, int timeline_id, int planet_id)
+    {
+        if (!player_conquests[player_id][timeline_id][planet_id])
+        {
+            player_conquests[player_id][timeline_id][planet_id] = true;
+            player_scores[player_id] += 1;
+        }
+
+        if (CurrentTimeline.LineID == timeline_id)
+            planets[planet_id].ShowFlag(player_id);
     }
     public void OnWin(int winner, int win_line, float win_time)
     {
@@ -147,8 +160,7 @@ public class GameManager : MonoBehaviour
     {
         int i = CurrentTimeline.LineID;
         i = (i + 1) % timelines.Length;
-        CurrentTimeline = timelines[i];
-        CurrentTimeline.SetTime(CurrentTimeline.Time);
+        timelines[i].SetTime(timelines[i].Time);
     }
 
 
@@ -166,7 +178,7 @@ public class GameManager : MonoBehaviour
         // Players
         if (GetNumPlayers() < 2) Debug.LogError("num players must be > 1");
         players = new Dictionary<int, Player>();
-        player_scores = new Dictionary<int, int>();
+        player_scores = new int[GetNumPlayers()];
 
         // Fleets
         fleets = new List<Fleet>();
@@ -176,12 +188,33 @@ public class GameManager : MonoBehaviour
     }
 
     // Initialization
+    private void OnWorldGenerated()
+    {
+        // Conquests scores
+        player_conquests = new bool[GetNumPlayers()][][];
+        for (int i = 0; i < GetNumPlayers(); ++i)
+        {
+            player_conquests[i] = new bool[timelines.Length][];
+            for (int j = 0; j < timelines.Length; ++j)
+            {
+                player_conquests[i][j] = new bool[planets.Length];
+                for (int k = 0; k < planets.Length; ++k)
+                {
+                    bool owns = timelines[j].GetState(0).planet_ownerIDs[k] == i;
+                    if (owns) MarkConquest(i, j, k);
+                }
+            }
+        }
+
+        // Force score update...
+        //OnHistoryChange(CurrentTimeline, 0);
+    }
     private IEnumerator GenerateWorld()
     {
         while (!seed_manager.seed_set) yield return null;
 
         // Generate Planets
-        Random.seed = seed_manager.seed;
+        Random.InitState(seed_manager.seed);
         GeneratePlanets();
         CreateRoutes();
 
@@ -196,6 +229,7 @@ public class GameManager : MonoBehaviour
         CurrentTimeline.SetTime(0);
 
         // Done
+        OnWorldGenerated();
         initialized = true;
         if (on_initialized != null)
         {
@@ -204,7 +238,7 @@ public class GameManager : MonoBehaviour
     }
     private void GeneratePlanets()
     {
-        int n = Random.Range(15, 15);
+        int n = num_planets; // Random.Range(15, 15);
         planets = new Planet[n];
 
         
@@ -338,12 +372,26 @@ public class GameManager : MonoBehaviour
     // Events
     private void OnTimeSet(Timeline line)
     {
-        CurrentTimeline = line;
-        if (on_time_set != null) on_time_set(line);
+        if (CurrentTimeline != line)
+        {
+            CurrentTimeline = line;
+            UpdateFlags();
+        }
     }
     private void OnHistoryChange(Timeline line, float earliest)
     {
         if (on_history_change != null) on_history_change(line, earliest);
+    }
+
+    private void UpdateFlags()
+    {
+        for (int i = 0; i < GetNumPlayers(); ++i)
+        {
+            for (int j = 0; j < planets.Length; ++j)
+            {
+                planets[j].ShowFlag(i, player_conquests[i][CurrentTimeline.LineID][j]);
+            }
+        }
     }
 
 }
@@ -352,7 +400,7 @@ public class WorldState
 {
     public float time;
     public int[] planet_pops;
-    public int[] planet_ownerIDs;
+    public int[] planet_ownerIDs; 
     public List<Flight> flights;
 
     public WorldState(float time, Planet[] planets)
@@ -452,7 +500,7 @@ public class PlayerCmd
 }
 public class Flight
 {
-    public const float speed = 0.25f; // units per second
+    public const float speed = 0.45f; // units per second
 
     public int owner_id;
     public int ships;

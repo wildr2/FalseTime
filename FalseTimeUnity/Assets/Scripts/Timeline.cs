@@ -34,6 +34,7 @@ public class Timeline : MonoBehaviour
     private int latest_cmd_id = -1;
     private int last_drawn_cmd_id = -1;
     private float latest_cmd_time;
+    private float min_cmd_dist = 5;
 
     private SortedList<float, TLEvent> fwd_key_events;
     private SortedList<float, TLEvent> next_fwd_key_events;
@@ -68,6 +69,25 @@ public class Timeline : MonoBehaviour
         }
 
         return newstate;
+    }
+    public bool[] GetPlanetsReady(WorldState state)
+    {
+        bool[] ready = new bool[gm.planets.Length];
+        for (int i = 0; i < ready.Length; ++i)
+        {
+            ready[i] = state.planet_ownerIDs[i] != -1;
+        }
+
+        foreach (PlayerCmd cmd in GetPlayerCmds())
+        {
+            if (Mathf.Abs(cmd.time - state.time) < min_cmd_dist)
+            {
+                if (state.planet_ownerIDs[cmd.selected_planet_id] == cmd.player_id)
+                    ready[cmd.selected_planet_id] = false;
+            }
+        }
+
+        return ready;
     }
     public int GetStateWinner(float time)
     {
@@ -218,9 +238,11 @@ public class Timeline : MonoBehaviour
     private void LoadState(WorldState state)
     {
         // Update planets
+        bool[] ready = GetPlanetsReady(state);
         for (int i = 0; i < gm.planets.Length; ++i)
         {
             gm.planets[i].SetPop(state.planet_pops[i], state.planet_ownerIDs[i]);
+            gm.planets[i].SetReady(ready[i]);
         }
 
         // Update routes
@@ -290,9 +312,10 @@ public class Timeline : MonoBehaviour
         }
         return node;
     }
-    private void ApplyFlightEnd(WorldState state, Flight flight, out bool scored)
+    private void ApplyFlightEnd(WorldState state, Flight flight, out bool scored, out bool took_planet)
     {
         scored = false;
+        took_planet = false;
         state.flights.Remove(flight);
 
         if (flight.flight_type == FlightType.TimeTravelSend) return;
@@ -312,6 +335,7 @@ public class Timeline : MonoBehaviour
                 // Allegiance change
                 new_pop = state.planet_pops[flight.end_planet_id] + flight.ships;
                 if (state.planet_ownerIDs[flight.end_planet_id] != -1) scored = true;
+                took_planet = true;
                 state.planet_pops[flight.end_planet_id] = new_pop;
                 state.planet_ownerIDs[flight.end_planet_id] = flight.owner_id;
             }
@@ -433,9 +457,14 @@ public class Timeline : MonoBehaviour
                 {
                     WorldState state = GetState(e.flight.end_time);
                     bool scored = false;
-                    ApplyFlightEnd(state, e.flight, out scored);
+                    bool took_planet = false;
+                    ApplyFlightEnd(state, e.flight, out scored, out took_planet);
                     SaveKeyState(state);
 
+                    if (took_planet)
+                    {
+                        gm.MarkConquest(e.cmd.player_id, LineID, e.flight.end_planet_id);
+                    }
                     if (scored && !e.cmd.scored)
                     {
                         gm.GivePoint(e.cmd.player_id);
@@ -542,11 +571,10 @@ public class Timeline : MonoBehaviour
     // Interaction and UI
     private void UpdateHistoryMarkers()
     {
-        // Delete old markers
-        Tools.DestroyChildren(cmds_parent);
-
         // Commands
         float prev_marker_time = -1;
+        int cmd_i = 0;
+
         foreach (PlayerCmd cmd in GetPlayerCmds())
         {
             // Determine marker time to avoid overlapping markers
@@ -557,9 +585,18 @@ public class Timeline : MonoBehaviour
             }
             prev_marker_time = marker_time;
 
-            // Create and position marker
-            RectTransform marker = Instantiate(marker_prefab);
-            marker.SetParent(cmds_parent, false);
+            // Create / reuse and position marker
+            RectTransform marker;
+            if (cmd_i < cmds_parent.childCount)
+            {
+                marker = cmds_parent.GetChild(cmd_i).GetComponent<RectTransform>();
+            }
+            else
+            {
+                marker = Instantiate(marker_prefab);
+                marker.SetParent(cmds_parent, false);
+            }
+                
             SetMarkerPosition(marker, marker_time);
 
             // Player color
@@ -570,29 +607,32 @@ public class Timeline : MonoBehaviour
             {
                 last_drawn_cmd_id = Mathf.Max(cmd.cmd_id, last_drawn_cmd_id);
                 StartCoroutine(FlashMarker(marker));
-                if (cmd.scored)
-                {
-                    // Score effect
-                    Text score_marker = Instantiate(score_marker_prefab);
-                    RectTransform rt = score_marker.GetComponent<RectTransform>();
-                    score_marker.transform.SetParent(line, false);
-                    score_marker.color = color;
-                    SetMarkerPosition(rt, cmd.score_time);
-                    StartCoroutine(FlashScoreMarker(score_marker));
-                }
+                //if (cmd.scored)
+                //{
+                //    // Score effect
+                //    Text score_marker = Instantiate(score_marker_prefab);
+                //    RectTransform rt = score_marker.GetComponent<RectTransform>();
+                //    score_marker.transform.SetParent(line, false);
+                //    score_marker.color = color;
+                //    SetMarkerPosition(rt, cmd.score_time);
+                //    StartCoroutine(FlashScoreMarker(score_marker));
+                //}
             }
 
             // Set marker color 
             if (cmd.valid)
             {
                 marker.GetComponent<Image>().color = color;
+                marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 60);
             }
             else
             {
-                Tools.Log("invalid cmd at " + cmd.time);
+                //Tools.Log("invalid cmd at " + cmd.time);
                 marker.GetComponent<Image>().color = color;
                 marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 30);
             }
+
+            ++cmd_i;
         }
     }
     private void UpdateClock()

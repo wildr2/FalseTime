@@ -13,15 +13,17 @@ public class Planet : MonoBehaviour
     public SpriteRenderer sprite_sr;
     public SpriteRenderer highlight_sr;
     public MeshRenderer sphere;
+    public Image[] flags;
 
     public int PlanetID { get; private set; }
+    public float Radius { get; private set; }
+
     public float Size { get; private set; }
     public int Pop { get; private set; }
     public int OwnerID { get; private set; }
+    public bool Ready { get; private set; }
 
-    public float Radius { get; private set; }
-
-
+    
     // Events
     public System.Action<Planet> on_pointer_enter;
     public System.Action<Planet> on_pointer_exit;
@@ -54,10 +56,12 @@ public class Planet : MonoBehaviour
         //sphere.material.color = Color.Lerp(Color.Lerp(new Color(Random.value, Random.value, Random.value), Color.white, 0.6f), Color.black, 0f);
         //sphere.material.color = neutral_color; //HsvToRgb(Random.value * 360, 0f, 0.3f);
         //sphere.material.color = Color.Lerp(sprite_sr.color, Color.black, 0.5f);
-        text.color = Color.black;
 
         // Rotation
         sphere.transform.rotation = Quaternion.Euler(0, Random.value * 360f, 0);
+
+        // Flags
+        foreach (Image flag in flags) flag.gameObject.SetActive(false);
     }
     public void ShowHighlight(Color color)
     {
@@ -67,6 +71,11 @@ public class Planet : MonoBehaviour
     public void HideHighlight()
     {
         highlight_sr.gameObject.SetActive(false);
+    }
+    public void SetReady(bool ready)
+    {
+        Ready = ready;
+        text.color = ready ? sprite_sr.color : neutral_color;
     }
     public void SetPop(int pop)
     {
@@ -81,7 +90,7 @@ public class Planet : MonoBehaviour
         OwnerID = ownerID;
         sprite_sr.color = ownerID == -1 ? neutral_color : gm.player_colors[ownerID];
         //text.color = ownerID == -1 ? Color.black : sprite_sr.color;
-        text.color = ownerID == -1 ? neutral_color : sprite_sr.color;
+        text.color = (ownerID == -1 || !Ready) ? neutral_color : sprite_sr.color;
         //inner_sprite_sr.color = Color.Lerp(sprite_sr.color, Color.black, 0.8f);
         //sphere.material.color = Color.Lerp(sprite_sr.color, Color.black, 0.5f);
 
@@ -97,7 +106,10 @@ public class Planet : MonoBehaviour
         //    ps.Play();
         //}
     }
-
+    public void ShowFlag(int player_id, bool show=true)
+    {
+        flags[player_id].gameObject.SetActive(show);
+    }
 
     public void OnPointerEnter()
     {
@@ -108,11 +120,6 @@ public class Planet : MonoBehaviour
         if (on_pointer_exit != null) on_pointer_exit(this);
     }
 
-
-    private void Update()
-    {
-        //sphere.transform.Rotate(0, Time.deltaTime * 20, 0);
-    }
 
     /// <summary>
     /// Convert HSV to RGB
