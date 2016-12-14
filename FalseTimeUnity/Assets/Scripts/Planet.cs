@@ -31,7 +31,7 @@ public class Planet : MonoBehaviour
 
     public float GetPopPerSecond(int ownerID)
     {
-        return ownerID == -1 ? 0 : Size * 1;
+        return ownerID == -1 ? 0 : Size * 1.2f;
     }
 
     public void Initialize(int id, float size, int pop, int ownerID)

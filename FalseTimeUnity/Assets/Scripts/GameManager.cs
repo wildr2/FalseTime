@@ -501,7 +501,7 @@ public class PlayerCmd
 }
 public class Flight
 {
-    public const float speed = 0.45f; // units per second
+    public const float speed = 0.55f; // units per second
 
     public int owner_id;
     public int ships;
