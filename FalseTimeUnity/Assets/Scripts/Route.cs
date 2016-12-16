@@ -67,8 +67,10 @@ public class Route : MonoBehaviour
 
         dist = Vector2.Distance(p1.transform.position, p2.transform.position);
         line.SetVertexCount(2);
-        line.SetPosition(0, new Vector2(-dist / 2f, 0));
-        line.SetPosition(1, new Vector2(dist / 2f, 0));
+        Vector2 pos1 = new Vector2(-dist / 2f, 0);
+        Vector2 pos2 = -pos1;
+        line.SetPosition(0, pos1);
+        line.SetPosition(1, pos2);
 
         Vector2 p1pos = p1.transform.position;
         Vector2 p2pos = p2.transform.position;
@@ -99,17 +101,37 @@ public class Route : MonoBehaviour
                     // Crossing time route route
                     crossing = true;
                     line.material.mainTextureScale = new Vector2(50f * (dist / 4f), 1);
+
+                    int n = 15;
+                    float phase = Random.value * 360f;
+                    line.SetVertexCount(n);
+                    for (int i = 0; i < n; ++i)
+                    {
+                        float t = (float)i / n;
+                        line.SetPosition(i, Vector2.Lerp(pos1, pos2, t)
+                            + new Vector2(0, Mathf.Sin(t*180f + phase) * 0.1f));
+                    }
                 }
                 else
                 {   // Non crossing time route
-                    line.material.mainTextureScale = new Vector2(20f * (dist / 4f), 1);
+                    line.material.mainTextureScale = new Vector2(15f * (dist / 4f), 1);
+
+                    int n = 15;
+                    float phase = Random.value * 360f;
+                    line.SetVertexCount(n);
+                    for (int i = 0; i < n; ++i)
+                    {
+                        float t = (float)i / n;
+                        line.SetPosition(i, Vector2.Lerp(pos1, pos2, t)
+                            + new Vector2(0, Mathf.Sin(t * 180f + phase) * 0.1f));
+                    }
                 }
             }
         }
         if (!IsTimeRoute())
         {
             // Regular route
-            line.material.mainTextureScale = new Vector2(10f * (dist / 4f), 1);
+            line.material.mainTextureScale = new Vector2(15f * (dist / 4f), 1);
         }
     }
     public void UpdateVisuals(float time)
@@ -146,15 +168,18 @@ public class Route : MonoBehaviour
         if (on_pointer_exit != null) on_pointer_exit(this);
     }
 
-
-    static Route()
+    private void Awake()
+    {
+        line = GetComponent<LineRenderer>();
+        if (tr_times_pool == null) GenerateTimeRoutePool();
+    }
+    private void GenerateTimeRoutePool()
     {
         // Generate possible time route times
-
         bool[] taken = new bool[100];
 
-        int[] tr_first_pool = Tools.ShuffleArray(Enumerable.Range(2, 58).ToArray());
-        int[] tr_second_pool = Tools.ShuffleArray(Enumerable.Range(40, 54).ToArray());
+        int[] tr_first_pool = Tools.ShuffleArray(Enumerable.Range(2, 68).ToArray());
+        int[] tr_second_pool = Tools.ShuffleArray(Enumerable.Range(25, 68).ToArray());
 
         tr_times_pool = new List<Pair<float, float>>();
 
@@ -169,10 +194,6 @@ public class Route : MonoBehaviour
                 taken[second] = true;
             }
         }
-    }
-    private void Awake()
-    {
-        line = GetComponent<LineRenderer>();
     }
 
     private IEnumerator Quiver()

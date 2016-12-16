@@ -634,8 +634,12 @@ public class Timeline : MonoBehaviour
                 marker = Instantiate(marker_prefab);
                 marker.SetParent(cmds_parent, false);
             }
-                
+
             SetMarkerPosition(marker, marker_time);
+            //SetMarkerPosition(marker, cmd.time);
+            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, DurationToTLDist(10));
+            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1);
+
 
             // Player color
             Color color = gm.player_colors[cmd.player_id];
@@ -645,16 +649,6 @@ public class Timeline : MonoBehaviour
             {
                 last_drawn_cmd_id = Mathf.Max(cmd.cmd_id, last_drawn_cmd_id);
                 StartCoroutine(FlashMarker(marker));
-                //if (cmd.scored)
-                //{
-                //    // Score effect
-                //    Text score_marker = Instantiate(score_marker_prefab);
-                //    RectTransform rt = score_marker.GetComponent<RectTransform>();
-                //    score_marker.transform.SetParent(line, false);
-                //    score_marker.color = color;
-                //    SetMarkerPosition(rt, cmd.score_time);
-                //    StartCoroutine(FlashScoreMarker(score_marker));
-                //}
             }
 
             // Set marker color 
@@ -665,7 +659,6 @@ public class Timeline : MonoBehaviour
             }
             else
             {
-                //Tools.Log("invalid cmd at " + cmd.time);
                 marker.GetComponent<Image>().color = color;
                 marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 30);
             }
@@ -702,19 +695,6 @@ public class Timeline : MonoBehaviour
             yield return new WaitForSeconds(0.25f);
         }
     }
-    private IEnumerator FlashScoreMarker(Text marker)
-    {
-        // Flash
-        Color color = marker.color;
-        for (int i = 0; i < 16; ++i)
-        {
-            if (marker == null) break;
-            marker.color = i % 2 == 0 ? Color.white : color;
-            yield return new WaitForSeconds(0.25f);
-        }
-
-        Destroy(marker.gameObject);
-    }
 
 
     // PRIVATE HELPERS
@@ -723,6 +703,10 @@ public class Timeline : MonoBehaviour
     {
         float x = Mathf.Lerp(0, line.rect.width, time / time_length);
         marker.anchoredPosition = SetX(marker.anchoredPosition, x);
+    }
+    private float DurationToTLDist(float duration)
+    {
+        return (duration / time_length) * line.rect.width;
     }
     private float TimeFromMousePos(float mousex)
     {

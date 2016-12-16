@@ -344,7 +344,10 @@ public class Player : NetworkBehaviour
         else
         {
             // Highlight planet to target
-            if (planet.OwnerID == selected_planet.OwnerID)
+            Route route = gm.planet_routes[selected_planet.PlanetID][planet.PlanetID];
+            if (route != null && route.IsTimeRoute(gm.CurrentTimeline.Time))
+                planet.ShowHighlight(Color.blue); // Time travel
+            else if (planet.OwnerID == selected_planet.OwnerID)
                 planet.ShowHighlight(Color.green); // Transfer
             else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] != null)
                 planet.ShowHighlight(Color.red); // Attack
