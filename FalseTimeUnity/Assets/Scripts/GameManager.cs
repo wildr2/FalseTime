@@ -484,7 +484,7 @@ public class PlayerCmd
         if (route == null && !transfer) return null; 
 
 
-        bool time_traveling = route != null && route.IsQuivering(time);
+        bool time_traveling = route != null && route.IsTimeRoute(time);
 
 
         // Create flight

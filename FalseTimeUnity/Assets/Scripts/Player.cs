@@ -16,6 +16,7 @@ public class Player : NetworkBehaviour
     // Selection
     private Planet pointed_planet;
     private Planet selected_planet;
+    private Route pointed_route;
 
     // Power
     private float power_bar_seconds = 10;
@@ -62,11 +63,24 @@ public class Player : NetworkBehaviour
             {
                 gm.on_time_set += OnTimeSet;
 
+                // Planet interaction
                 foreach (Planet planet in gm.GetPlanets())
                 {
                     // Planet mouse events
                     planet.on_pointer_enter += OnPlanetMouseEnter;
                     planet.on_pointer_exit += OnPlanetMouseExit;
+                }
+
+                // Route interaction
+                for (int i = 0; i < gm.planets.Length; ++i)
+                {
+                    for (int j = i; j < gm.planets.Length; ++j)
+                    {
+                        Route r = gm.planet_routes[i][j];
+                        if (r == null) continue;
+                        r.on_pointer_enter += OnRouteMouseEnter;
+                        r.on_pointer_exit += OnRouteMouseExit;
+                    }
                 }
 
                 StartCoroutine(HumanUpdate());
@@ -95,6 +109,11 @@ public class Player : NetworkBehaviour
                 {
                     // Click planet
                     OnPlanetClick(pointed_planet);
+                }
+                else if (pointed_route != null)
+                {
+                    // Click route
+                    OnRouteClick(pointed_route);
                 }
                 else
                 {
@@ -249,6 +268,7 @@ public class Player : NetworkBehaviour
     {
         DeselectPlanet();
     }
+
     private void OnPlanetClick(Planet planet)
     {
         if (!gm.IsGamePlaying()) return;
@@ -347,6 +367,36 @@ public class Player : NetworkBehaviour
         }
             
     }
+
+    private void OnRouteClick(Route route)
+    {
+        if (route.IsTimeRoute())
+        {
+            float to_time = route.GetTimeTravelTime(gm.CurrentTimeline.Time);
+            if (to_time == gm.CurrentTimeline.Time)
+            {
+                // Not at either time route time - go to first 
+                gm.CurrentTimeline.SetTime(route.GetTRSecond() + 0.001f);
+            }
+            else
+            {
+                // At a time route time - go to corresponding time
+                if (route.IsCrossing()) gm.SwitchTimeline();
+                gm.CurrentTimeline.SetTime(to_time + 0.001f);
+            }
+            
+            
+        }
+    }
+    private void OnRouteMouseEnter(Route route)
+    {
+        pointed_route = route;
+    }
+    private void OnRouteMouseExit(Route route)
+    {
+        pointed_route = null;
+    }
+
     private void OnTimeSet(Timeline line)
     {
         if (!gm.IsGamePlaying()) return;

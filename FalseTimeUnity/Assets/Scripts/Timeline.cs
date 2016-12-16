@@ -15,8 +15,8 @@ public class Timeline : MonoBehaviour
 
     // UI
     private bool focused = true;
-    public RectTransform cmds_parent;
-    public RectTransform line, knob, marker_prefab;
+    public RectTransform cmds_parent, trs_parent;
+    public RectTransform line, knob, marker_prefab, time_route_marker;
     private bool pointer_down;
     public Text clock, win_text, score_text, score_marker_prefab;
 
@@ -134,6 +134,9 @@ public class Timeline : MonoBehaviour
     {
         LineID = id;
         tls.Add(this);
+
+        // UI
+        if (LineID == 0) CreateRouteMarkers();
 
         // Create initial history
         state_0 = new WorldState(0, gm.planets);
@@ -573,6 +576,37 @@ public class Timeline : MonoBehaviour
     }
 
     // Interaction and UI
+    private void CreateRouteMarkers()
+    {
+        for (int i = 0; i < gm.planets.Length; ++i)
+        {
+            for (int j = i; j < gm.planets.Length; ++j)
+            {
+                Route r = gm.planet_routes[i][j];
+                if (r == null) continue;
+                if (r.IsTimeRoute())
+                {
+                    float size = Mathf.Lerp(0.5f, 2f, (r.GetTRSecond() - r.GetTRFirst()) / time_length);
+
+                    // Right pointing arrow
+                    RectTransform marker = Instantiate(time_route_marker);
+                    marker.SetParent(trs_parent, false);
+                    Text txt = marker.GetComponent<Text>();
+                    txt.fontSize = (int)(txt.fontSize * size);
+                    txt.text = ">";
+                    SetMarkerPosition(marker, r.GetTRFirst());
+
+                    // Left pointing arrow
+                    marker = Instantiate(time_route_marker);
+                    marker.SetParent(trs_parent, false);
+                    txt = marker.GetComponent<Text>();
+                    txt.text = "<";
+                    txt.fontSize = (int)(txt.fontSize * size);
+                    SetMarkerPosition(marker, r.GetTRSecond());
+                }
+            }
+        }
+    }
     private void UpdateHistoryMarkers()
     {
         // Commands
