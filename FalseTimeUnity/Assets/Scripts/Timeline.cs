@@ -361,7 +361,7 @@ public class Timeline : MonoBehaviour
         for (int i = 0; i < tls.Count; ++i)
         {
             tls[i].settled = false;
-            if (i != origin_line_id) tls[i].latest_change_time = -1;
+            if (i != origin_line_id) tls[i].latest_change_time = tls[i].time_length + 1;
         }
 
         int iteration = 1;
@@ -399,7 +399,7 @@ public class Timeline : MonoBehaviour
         for (int i = 0; i < tls.Count; ++i)
         {
             // Event
-            if (tls[i].latest_change_time >= 0)
+            if (tls[i].latest_change_time <= tls[i].time_length)
                 tls[i].OnHistoryChange(tls[i].latest_change_time);
         }
 
