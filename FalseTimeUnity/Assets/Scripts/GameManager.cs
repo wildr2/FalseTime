@@ -468,37 +468,46 @@ public class PlayerCmd
     public Flight TryToApply(WorldState state, Timeline line, Planet[] planets, Route[][] routes)
     {
         // Can't send ships from enemy planet
-        if (state.planet_ownerIDs[selected_planet_id] != player_id) return null;
+        if (state.planet_ownerIDs[selected_planet_id] == player_id)
+        {
+            int ships = Mathf.CeilToInt(state.planet_pops[selected_planet_id] / 2f);
 
+            // Can't send less than 1 ship
+            if (ships >= 1)
+            {
+                Route route = routes[selected_planet_id][target_planet_id];
+                bool transfer = state.planet_ownerIDs[selected_planet_id] == state.planet_ownerIDs[target_planet_id];
 
-        int ships = Mathf.CeilToInt(state.planet_pops[selected_planet_id] / 2f);
+                // Can only send ships without route if between friendly planets
+                if (route != null || transfer)
+                {
+                    bool time_traveling = route != null && route.IsTimeRoute(time);
 
-        // Can't send less than 1 ship
-        if (ships < 1) return null;
+                    // Create flight
+                    Flight flight = new Flight(state.planet_ownerIDs[selected_planet_id],
+                            ships, planets[selected_planet_id], planets[target_planet_id], time, line.LineID);
 
+                    if (time_traveling) flight.flight_type = FlightType.TimeTravelSend;
 
-        Route route = routes[selected_planet_id][target_planet_id];
-        bool transfer = state.planet_ownerIDs[selected_planet_id] == state.planet_ownerIDs[target_planet_id];
+                    // Modify state
+                    state.planet_pops[selected_planet_id] -= ships;
+                    state.flights.Add(flight);
 
-        // Can only send ships without route if between friendly planets
-        if (route == null && !transfer) return null; 
+                    return flight;
+                }
+            }
+        }
 
-
-        bool time_traveling = route != null && route.IsTimeRoute(time);
-
-
-        // Create flight
-        Flight flight = new Flight(state.planet_ownerIDs[selected_planet_id],
-                ships, planets[selected_planet_id], planets[target_planet_id], time, line.LineID);
-
-        if (time_traveling) flight.flight_type = FlightType.TimeTravelSend;
+        // Invalid command - send ghost flight indicated with 0 ships
+        Flight ghost_flight = new Flight(player_id, 0, planets[selected_planet_id],
+            planets[target_planet_id], time, line.LineID);
 
         // Modify state
-        state.planet_pops[selected_planet_id] -= ships;
-        state.flights.Add(flight);
+        state.flights.Add(ghost_flight);
 
-        return flight;
+        return ghost_flight;
     }
+
 }
 public class Flight
 {

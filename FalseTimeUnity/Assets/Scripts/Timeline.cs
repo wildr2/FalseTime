@@ -329,6 +329,7 @@ public class Timeline : MonoBehaviour
         state.flights.Remove(flight);
 
         if (flight.flight_type == FlightType.TimeTravelSend) return;
+        if (flight.ships == 0) return; // ghost flight
 
         if (flight.owner_id == state.planet_ownerIDs[flight.end_planet_id])
         {
@@ -430,27 +431,39 @@ public class Timeline : MonoBehaviour
                 WorldState state = GetState(e.cmd.time);
                 Flight new_flight = e.cmd.TryToApply(state, this, gm.planets, gm.planet_routes);
 
-                if (new_flight != null)
-                {
-                    //Tools.Log("flight: " + e.cmd.time + " " + new_flight.flight_type.ToString());
+               
+                // Command is valid in current history
+                e.cmd.valid = new_flight.ships == 0;
+                key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
 
-                    // Command is valid in current history
-                    e.cmd.valid = true;
-                    key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
-
-                    if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past or future
-                    {
-                        Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
-                        tls[recv_flight.tl_id].next_fwd_key_events.Add(
-                            recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
-                    }
-                    SaveKeyState(state);
-                }
-                else
+                if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past or future
                 {
-                    //Tools.Log("invalid flight: " + e.cmd.time + " " + new_flight.flight_type.ToString());
-                    e.cmd.valid = false;
+                    Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
+                    tls[recv_flight.tl_id].next_fwd_key_events.Add(
+                        recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
                 }
+                SaveKeyState(state);
+
+
+                //if (new_flight != null)
+                //{
+                //    // Command is valid in current history
+                //    e.cmd.valid = true;
+                //    key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
+
+                //    if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past or future
+                //    {
+                //        Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
+                //        tls[recv_flight.tl_id].next_fwd_key_events.Add(
+                //            recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
+                //    }
+                //    SaveKeyState(state);
+                //}
+                //else
+                //{
+                //    // Command is invalid in current history
+                //    e.cmd.valid = false;
+                //}
             }
             else if (e as TLEFlightStart != null)
             {
@@ -466,10 +479,10 @@ public class Timeline : MonoBehaviour
                 if (e.flight.end_time <= GetEndTime())
                 {
                     WorldState state = GetState(e.flight.end_time);
+
                     bool scored = false;
                     bool took_planet = false;
                     ApplyFlightEnd(state, e.flight, out scored, out took_planet);
-                    SaveKeyState(state);
 
                     if (took_planet)
                     {
@@ -481,6 +494,7 @@ public class Timeline : MonoBehaviour
                         e.cmd.scored = true;
                         e.cmd.score_time = e.flight.end_time;
                     }
+                    SaveKeyState(state);
                 }
             }
         }

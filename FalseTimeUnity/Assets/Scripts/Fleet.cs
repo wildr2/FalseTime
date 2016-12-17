@@ -21,6 +21,15 @@ public class Fleet : MonoBehaviour
         Vector3 scale = Vector3.one * (0.8f + number_of_ships / 50f);
         scale.z = 1;
         transform.localScale = scale;
+
+        // Ghost fleet
+        if (number_of_ships == 0)
+        {
+            scale = Vector3.one * 0.2f;
+            scale.z = 1;
+            text.text = "";
+            sprite_sr.color = Color.Lerp(player_color, Color.black, 0.35f);
+        }
     }
     public void SetPosition(Planet from, Planet to, float progress)
     {
