@@ -19,6 +19,9 @@ public class Timeline : MonoBehaviour
     public RectTransform line, knob, marker_prefab, time_route_marker;
     private bool pointer_down;
     public Text clock, win_text, score_text, score_marker_prefab;
+    public Image change_overlay;
+    private Coroutine flash_change_routine;
+    private List<Turnover> turnovers = new List<Turnover>();
 
     // Interaction
     private float scrape_speed = 30;
@@ -554,7 +557,11 @@ public class Timeline : MonoBehaviour
     }
     private void OnHistoryChange(float earliest)
     {
-        UpdateHistoryMarkers();
+        UpdateHistoryMarkers2();
+
+        if (flash_change_routine != null) StopCoroutine(flash_change_routine); 
+        flash_change_routine = StartCoroutine(FlashChangeOverlay(earliest));
+
         if (on_history_change != null) on_history_change(this, earliest);
     }
     private void OnTimeSet(Timeline line) // any timeline
@@ -607,12 +614,61 @@ public class Timeline : MonoBehaviour
             }
         }
     }
+    private void UpdateHistoryMarkers2()
+    {
+        List<RectTransform> old_markers = new List<RectTransform>();
+        foreach (Turnover old_to in turnovers)
+        {
+            if (old_to.flash_routine != null)
+                StopCoroutine(old_to.flash_routine);
+            old_markers.Add(old_to.marker);
+        }
+        StartCoroutine(FadeOutMarkers(old_markers));
+
+        List<Turnover> updated_turnovers = GetTurnovers();
+
+        foreach (Turnover to in updated_turnovers)
+        {
+            bool new_turnover = true;
+            foreach (Turnover old_to in turnovers)
+            {
+                if (to.time == old_to.time && to.planet_id == old_to.planet_id)
+                {
+                    new_turnover = false;
+                    break;
+                }
+            }
+
+            RectTransform marker = Instantiate(marker_prefab);
+            marker.SetParent(cmds_parent, false);
+            to.marker = marker;
+
+            SetMarkerPosition(marker, to.time);
+            Vector3 p = marker.localPosition;
+            p.y = ((float)to.planet_id / gm.planets.Length) * 30 - 15;
+            marker.localPosition = p;
+
+            float size = Mathf.Lerp(5, 30, to.new_pop / 200f);
+            marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size);
+            marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);
+
+            Color color = gm.player_colors[to.new_owner_id];
+            marker.GetComponent<Image>().color = color;
+
+            if (new_turnover)
+                to.flash_routine = StartCoroutine(FlashMarker2(marker, size));
+        }
+
+        turnovers = updated_turnovers;
+    }
     private void UpdateHistoryMarkers()
     {
         // Commands
         float prev_marker_time = -1;
         int cmd_i = 0;
+        Tools.DestroyChildren(cmds_parent);
 
+ 
         foreach (PlayerCmd cmd in GetPlayerCmds())
         {
             // Determine marker time to avoid overlapping markers
@@ -624,43 +680,70 @@ public class Timeline : MonoBehaviour
             prev_marker_time = marker_time;
 
             // Create / reuse and position marker
-            RectTransform marker;
-            if (cmd_i < cmds_parent.childCount)
-            {
-                marker = cmds_parent.GetChild(cmd_i).GetComponent<RectTransform>();
-            }
-            else
-            {
-                marker = Instantiate(marker_prefab);
-                marker.SetParent(cmds_parent, false);
-            }
+            //RectTransform marker;
+            //if (cmd_i < cmds_parent.childCount)
+            //{
+            //    marker = cmds_parent.GetChild(cmd_i).GetComponent<RectTransform>();
+            //}
+            //else
+            //{
+            //    marker = Instantiate(marker_prefab);
+            //    marker.SetParent(cmds_parent, false);
+            //}
+            RectTransform marker, marker2;
+            //marker = Instantiate(marker_prefab);
+            //marker.SetParent(cmds_parent, false);
+            marker2 = Instantiate(marker_prefab);
+            marker2.SetParent(cmds_parent, false);
 
-            SetMarkerPosition(marker, marker_time);
-            //SetMarkerPosition(marker, cmd.time);
-            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, DurationToTLDist(10));
-            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1);
+            //SetMarkerPosition(marker, marker_time);
+            //float dur = Mathf.Min(5, cmd.time - 0) + Mathf.Min(5, time_length - cmd.time);
+            //SetMarkerPosition(marker, Mathf.Min(Mathf.Max(cmd.time, dur/2f), time_length-dur/2f));
+            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, DurationToTLDist(dur));
 
+            SetMarkerPosition(marker2, cmd.time);
+            marker2.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 4);
+            marker2.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 4);
 
             // Player color
             Color color = gm.player_colors[cmd.player_id];
+
+
+            //marker.GetComponent<Image>().color = Color.Lerp(color, new Color(0.3f, 0.3f, 0.3f), 0.6f);
+            //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1);
+            //Vector3 p = marker.localPosition;
+            //p.y = ((float)cmd.selected_planet_id / gm.planets.Length) * 55 - 25;
+            //marker.localPosition = p;
+
+            marker2.GetComponent<Image>().color = Color.Lerp(Color.clear, color, (cmd.cmd_id + 1) / (float)player_cmds.Count);
+            Vector3 p = marker2.localPosition;
+            p.y = ((float)cmd.selected_planet_id / gm.planets.Length) * 55 - 25;
+            marker2.localPosition = p;
+
+
 
             // New Command
             if (cmd.cmd_id > last_drawn_cmd_id)
             {
                 last_drawn_cmd_id = Mathf.Max(cmd.cmd_id, last_drawn_cmd_id);
-                StartCoroutine(FlashMarker(marker));
+                //StartCoroutine(FlashMarker(marker));
             }
 
             // Set marker color 
             if (cmd.valid)
             {
-                marker.GetComponent<Image>().color = color;
-                marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 60);
+                //marker.GetComponent<Image>().color = color;
+                //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1);
+                //Vector3 p = marker.localPosition;
+                //p.y = ((float)cmd.selected_planet_id / gm.planets.Length) * 55 - 25;                
+                //marker.localPosition = p;
             }
             else
             {
-                marker.GetComponent<Image>().color = color;
-                marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 30);
+                //marker.GetComponent<Image>().color = color;
+                //marker.GetComponent<Image>().color = Color.clear;
+                marker2.GetComponent<Image>().color = Color.grey;
+                //marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1);
             }
 
             ++cmd_i;
@@ -694,6 +777,126 @@ public class Timeline : MonoBehaviour
             img.color = i % 2 == 0 ? Color.white : color;
             yield return new WaitForSeconds(0.25f);
         }
+    }
+    private IEnumerator FlashMarker2(RectTransform marker, float size)
+    {
+        // Shrink
+        for (float t = 0; t < 1; t += UnityEngine.Time.deltaTime * 2f)
+        {
+            if (marker == null) yield break;
+
+            float s = Mathf.Lerp(size * 4f, size, 1 - Mathf.Pow(1 - t, 2));
+            marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, s);
+            marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, s);
+
+            yield return null;
+        }
+
+        if (marker == null) yield break;
+        marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size);
+        marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);
+
+        // Flash
+        Image img = marker.GetComponent<Image>();
+        Color color = img.color;
+        for (int i = 0; i < 16; ++i)
+        {
+            if (marker == null) yield break;
+
+            float s = i % 2 == 0 ? size * 2f : size;
+            marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, s);
+            marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, s);
+            //img.color = i % 2 == 0 ? Color.white : color;
+            yield return new WaitForSeconds(0.25f);
+        }
+    }
+    private IEnumerator FadeOutMarkers(List<RectTransform> markers)
+    {
+        Image[] marker_imgs = new Image[markers.Count];
+        Color[] start_colors = new Color[markers.Count];
+        int i = 0;
+        foreach (RectTransform marker in markers)
+        {
+            marker_imgs[i] = marker.GetComponent<Image>();
+            start_colors[i] = marker_imgs[i].color;
+            ++i;
+        }
+
+        // Flash
+        for (i = 0; i < 8; ++i)
+        {
+            for (int j = 0; j < marker_imgs.Length; ++j)
+            {
+                marker_imgs[j].color = i % 2 == 0 ? Color.clear : start_colors[j];
+            }
+            yield return new WaitForSeconds(0.1f);
+        }
+        
+        // Fade
+        for (float t = 0; t < 1; t += UnityEngine.Time.deltaTime / 5f)
+        {
+            for (i = 0; i < marker_imgs.Length; ++i)
+            {
+                marker_imgs[i].color = Color.Lerp(start_colors[i], Color.clear, t);
+            }
+            yield return null;
+        }
+
+        // Destroy
+        for (i = 0; i < marker_imgs.Length; ++i)
+        {
+            Destroy(marker_imgs[i].gameObject);
+        }
+    }
+    private IEnumerator FlashChangeOverlay(float earliest)
+    {
+        change_overlay.gameObject.SetActive(true);
+        change_overlay.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,
+            line.rect.width * ((time_length - earliest) / time_length));
+        SetMarkerPosition(change_overlay.rectTransform, earliest);
+
+        Color start_color = Color.white;
+        start_color.a = 0.3f;
+
+        for (float t = 0; t < 1; t += UnityEngine.Time.deltaTime)
+        {
+            //float f = Mathf.Lerp(0, 1, 1-Mathf.Pow(1-t, 2));
+            change_overlay.color = Color.Lerp(start_color, Color.clear, t);
+            yield return null;
+        }
+
+        change_overlay.gameObject.SetActive(false);
+    }
+
+    private List<Turnover> GetTurnovers()
+    {
+        List<Turnover> turnovers = new List<Turnover>();
+
+        WorldState last_state = state_0;
+        foreach (WorldState state in key_states)
+        {
+            for (int i = 0; i < state.planet_pops.Length; ++i)
+            {
+                if (state.planet_ownerIDs[i] != last_state.planet_ownerIDs[i])
+                {
+                    if (state.planet_ownerIDs[i]
+                        != last_state.planet_ownerIDs[i])
+                    {
+                        Turnover to = new Turnover();
+                        to.time = state.time;
+                        to.planet_id = i;
+                        to.old_owner_id = last_state.planet_ownerIDs[i];
+                        to.new_owner_id = state.planet_ownerIDs[i];
+                        to.new_pop = state.planet_pops[i];
+
+                        turnovers.Add(to);
+                    }
+                }
+            }
+            last_state = state;
+        }
+
+        return turnovers;
     }
 
 
@@ -756,3 +959,13 @@ public class TLEFlightStart : TLEvent
     }
 }
 
+public class Turnover
+{
+    public float time;
+    public int planet_id;
+    public int new_pop;
+    public int old_owner_id;
+    public int new_owner_id;
+    public RectTransform marker;
+    public Coroutine flash_routine;
+}
