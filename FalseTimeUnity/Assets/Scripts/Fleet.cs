@@ -12,23 +12,25 @@ public class Fleet : MonoBehaviour
 
     public void Initialize(int ownerID, int number_of_ships, Color player_color)
     {
-        text = GetComponentInChildren<Text>();
-
         OwnerID = ownerID;
-        sprite_sr.color = player_color;
-        text.text = number_of_ships.ToString();
-
-        Vector3 scale = Vector3.one * (0.8f + number_of_ships / 50f);
-        scale.z = 1;
-        transform.localScale = scale;
-
+        text = GetComponentInChildren<Text>();
+       
         // Ghost fleet
         if (number_of_ships == 0)
         {
-            scale = Vector3.one * 0.2f;
+            Vector3 scale = Vector3.one;
             scale.z = 1;
-            text.text = "";
-            sprite_sr.color = Color.Lerp(player_color, Color.black, 0.35f);
+            transform.localScale = scale;
+            text.color = player_color;
+        }
+        // Regular fleet
+        else
+        {
+            Vector3 scale = Vector3.one * (0.8f + number_of_ships / 50f);
+            scale.z = 1;
+            transform.localScale = scale;
+            text.text = number_of_ships.ToString();
+            sprite_sr.color = player_color;
         }
     }
     public void SetPosition(Planet from, Planet to, float progress)

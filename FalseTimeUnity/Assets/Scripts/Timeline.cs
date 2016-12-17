@@ -276,7 +276,12 @@ public class Timeline : MonoBehaviour
         {
             float p = flight.GetProgress(state.time);
 
-            Fleet fleet = Instantiate(gm.fleet_prefab);
+            Fleet fleet;
+            if (flight.ships == 0)
+                fleet = Instantiate(gm.ghost_fleet_prefab);
+            else
+                fleet = Instantiate(gm.fleet_prefab);
+
             fleet.Initialize(flight.owner_id, flight.ships, gm.player_colors[flight.owner_id]);
             fleet.SetPosition(gm.planets[flight.start_planet_id], gm.planets[flight.end_planet_id], p);
 
@@ -431,9 +436,7 @@ public class Timeline : MonoBehaviour
                 WorldState state = GetState(e.cmd.time);
                 Flight new_flight = e.cmd.TryToApply(state, this, gm.planets, gm.planet_routes);
 
-               
-                // Command is valid in current history
-                e.cmd.valid = new_flight.ships == 0;
+                
                 key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
 
                 if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past or future
@@ -443,27 +446,6 @@ public class Timeline : MonoBehaviour
                         recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
                 }
                 SaveKeyState(state);
-
-
-                //if (new_flight != null)
-                //{
-                //    // Command is valid in current history
-                //    e.cmd.valid = true;
-                //    key_events.Add(new_flight.end_time, new TLEFlightEnd(new_flight, e.cmd));
-
-                //    if (new_flight.flight_type == FlightType.TimeTravelSend) // flight to past or future
-                //    {
-                //        Flight recv_flight = Flight.MakeRecvFlight(new_flight, gm.planet_routes);
-                //        tls[recv_flight.tl_id].next_fwd_key_events.Add(
-                //            recv_flight.start_time, new TLEFlightStart(recv_flight, e.cmd));
-                //    }
-                //    SaveKeyState(state);
-                //}
-                //else
-                //{
-                //    // Command is invalid in current history
-                //    e.cmd.valid = false;
-                //}
             }
             else if (e as TLEFlightStart != null)
             {
