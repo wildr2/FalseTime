@@ -37,6 +37,7 @@ public class Planet : MonoBehaviour
         return ownerID == -1 ? 0 : Size * 1.2f;
     }
 
+
     public void Initialize(int id, float size, int pop, int ownerID)
     {
         gm = FindObjectOfType<GameManager>();

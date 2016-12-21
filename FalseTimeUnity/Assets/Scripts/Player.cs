@@ -432,11 +432,10 @@ public class Player : NetworkBehaviour
     [Command]
     private void CmdCheckForWin(int line, float time)
     {
-        int winner = gm.GetWinner(line, time); //gm.GetStateWinner(time);
+        int winner = gm.GetWinner();
         if (winner >= 0)
         {
             // Win
-            Tools.Log("PLAYER " + winner + " WINS!");
             RpcInformWin(winner, line, time);
         }
     }

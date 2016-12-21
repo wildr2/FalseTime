@@ -1,0 +1,86 @@
+GameManager
+    worldmanager
+    timelines
+    player_flag_counts
+    on_new_flag
+
+    Init()
+        worldmanager.GenerateWorld()
+
+    OnHistoryChange()
+        foreach timeline in timelines:
+            foreach turnover in timeline:
+                if no flag player / planet:
+                    AddFlag(player, planet)
+
+    AddFlag(player, planet)
+        planet.SetFlag()
+        ++player_flag_counts[player.id]
+        on_new_flag(player, planet, player_flag_counts)
+
+
+MatchUI
+    player_flag
+    match_type_text
+    score_objs
+    score_prefab
+
+    OnNewFlag(player, planet, player_flag_counts)
+        
+
+
+WorldManager
+    planets
+    routes
+    GenerateWorld()
+    LoadState()
+    OnViewSet(timeline, time)
+        LoadState(timeline.GetState(time))
+
+
+Timeline
+    id
+    keystates
+    on_history_change
+
+    GetState()
+    RemakeKeyStates()
+    
+    static AddPlayerCmd(cmd)
+    static RewriteAllTLs()
+        tl[0].on_history_change()
+        tl[1].on_history_change()
+
+
+TimelineUI
+    on_click
+
+    FlashChangeOverlay()
+    UpdateMarkers()
+    SetMarker(time)
+    OnViewSet(timeline, time)
+        if timeline != this: return
+        SetMarker(clock, time)
+    OnHistoryChange(line, earliest)
+        UpdateMarkers()
+        FlashChangeOverlay(earliest)
+
+
+ViewController
+    timeline
+    time
+    on_view_set
+
+    OnTimelineUIClick(line, time)
+        Set(line, time)
+
+    UpdateKBControl()
+    
+    Set(timeline, time)
+        this.timeline = timeline
+        this.time = time
+        on_view_set()
+
+
+
+Player

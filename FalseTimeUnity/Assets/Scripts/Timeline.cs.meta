@@ -1,10 +1,22 @@
 fileFormatVersion: 2
 guid: 8d951be69ba4d9245968c4d4713159fb
-timeCreated: 1472219844
+timeCreated: 1482352584
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - cmds_parent: {instanceID: 0}
+  - trs_parent: {instanceID: 0}
+  - line: {instanceID: 0}
+  - knob: {instanceID: 0}
+  - marker_prefab: {instanceID: 0}
+  - time_route_marker: {fileID: 224000010107244406, guid: 9a43a41bdedc63d4d8227c110925b104,
+      type: 2}
+  - clock: {instanceID: 0}
+  - win_text: {instanceID: 0}
+  - score_text: {instanceID: 0}
+  - score_marker_prefab: {instanceID: 0}
+  - change_overlay: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

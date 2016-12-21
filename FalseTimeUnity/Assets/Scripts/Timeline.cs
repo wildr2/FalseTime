@@ -21,7 +21,8 @@ public class Timeline : MonoBehaviour
     public Text clock, win_text, score_text, score_marker_prefab;
     public Image change_overlay;
     private Coroutine flash_change_routine;
-    private List<Turnover> turnovers = new List<Turnover>();
+    List<RectTransform> to_markers = new List<RectTransform>();
+    List<Coroutine> to_marker_routines = new List<Coroutine>();
 
     // Interaction
     private float scrape_speed = 30;
@@ -45,6 +46,8 @@ public class Timeline : MonoBehaviour
     private bool settled = false;
     private float latest_change_time = 0; // earliest time affected by latest change
 
+    private List<Turnover> old_turnovers = new List<Turnover>();
+    private List<Turnover> turnovers = new List<Turnover>();
 
     // Events
     public System.Action<Timeline> on_time_set;
@@ -128,6 +131,10 @@ public class Timeline : MonoBehaviour
     public LinkedList<PlayerCmd> GetPlayerCmds()
     {
         return player_cmds;
+    }
+    public List<Turnover> GetTurnovers()
+    {
+        return turnovers;
     }
 
 
@@ -403,6 +410,10 @@ public class Timeline : MonoBehaviour
         // Timelines up to date
         for (int i = 0; i < tls.Count; ++i)
         {
+            // Update history information
+            tls[i].old_turnovers = tls[i].turnovers;
+            tls[i].turnovers = tls[i].FindTurnovers();
+
             // Event
             if (tls[i].latest_change_time <= tls[i].time_length)
                 tls[i].OnHistoryChange(tls[i].latest_change_time);
@@ -466,13 +477,12 @@ public class Timeline : MonoBehaviour
                     bool took_planet = false;
                     ApplyFlightEnd(state, e.flight, out scored, out took_planet);
 
-                    if (took_planet)
-                    {
-                        gm.MarkConquest(e.cmd.player_id, LineID, e.flight.end_planet_id);
-                    }
+                    //if (took_planet)
+                    //{
+                    //    gm.MarkConquest(e.cmd.player_id, LineID, e.flight.end_planet_id);
+                    //}
                     if (scored && !e.cmd.scored)
                     {
-                        gm.GivePoint(e.cmd.player_id);
                         e.cmd.scored = true;
                         e.cmd.score_time = e.flight.end_time;
                     }
@@ -612,21 +622,25 @@ public class Timeline : MonoBehaviour
     }
     private void UpdateHistoryMarkers2()
     {
-        List<RectTransform> old_markers = new List<RectTransform>();
-        foreach (Turnover old_to in turnovers)
+        // Clear old markers (stop routines, fade out)
+        foreach (Coroutine routine in to_marker_routines)
         {
-            if (old_to.flash_routine != null)
-                StopCoroutine(old_to.flash_routine);
-            old_markers.Add(old_to.marker);
+            if (routine != null)
+                StopCoroutine(routine);
         }
+        to_marker_routines.Clear();
+
+        List<RectTransform> old_markers = new List<RectTransform>(to_markers);
         StartCoroutine(FadeOutMarkers(old_markers));
 
-        List<Turnover> updated_turnovers = GetTurnovers();
+        to_markers.Clear();
+        
 
-        foreach (Turnover to in updated_turnovers)
+        // Make new markers
+        foreach (Turnover to in turnovers)
         {
             bool new_turnover = true;
-            foreach (Turnover old_to in turnovers)
+            foreach (Turnover old_to in old_turnovers)
             {
                 if (to.time == old_to.time && to.planet_id == old_to.planet_id)
                 {
@@ -637,14 +651,13 @@ public class Timeline : MonoBehaviour
 
             RectTransform marker = Instantiate(marker_prefab);
             marker.SetParent(cmds_parent, false);
-            to.marker = marker;
 
             SetMarkerPosition(marker, to.time);
             Vector3 p = marker.localPosition;
             p.y = ((float)to.planet_id / gm.planets.Length) * 30 - 15;
             marker.localPosition = p;
 
-            float size = Mathf.Lerp(5, 30, to.new_pop / 200f);
+            float size = Mathf.Lerp(5, 40, to.new_pop / 200f);
             marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size);
             marker.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);
 
@@ -652,10 +665,8 @@ public class Timeline : MonoBehaviour
             marker.GetComponent<Image>().color = color;
 
             if (new_turnover)
-                to.flash_routine = StartCoroutine(FlashMarker2(marker, size));
+                to_marker_routines.Add(StartCoroutine(FlashMarker2(marker, size)));
         }
-
-        turnovers = updated_turnovers;
     }
     private void UpdateHistoryMarkers()
     {
@@ -864,7 +875,7 @@ public class Timeline : MonoBehaviour
         change_overlay.gameObject.SetActive(false);
     }
 
-    private List<Turnover> GetTurnovers()
+    private List<Turnover> FindTurnovers()
     {
         List<Turnover> turnovers = new List<Turnover>();
 
@@ -962,6 +973,4 @@ public class Turnover
     public int new_pop;
     public int old_owner_id;
     public int new_owner_id;
-    public RectTransform marker;
-    public Coroutine flash_routine;
 }

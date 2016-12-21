@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     // General
     private bool initialized = false;
     private bool game_over = false;
-    private int points_to_win;
+    private int flags_to_win;
 
     // Timelines
     public Timeline CurrentTimeline { get; private set; }
@@ -26,8 +26,8 @@ public class GameManager : MonoBehaviour
 
     private int players_registered = 0;
     public Dictionary<int, Player> players; // keys are player ids
-    private int[] player_scores;
-    private bool[][][] player_conquests;
+    private int[] player_scores; // flag counts
+    private bool[][][] player_flags; // player_id, timeline_id, planet_id
 
     // References
     public SeedManager seed_manager;
@@ -41,7 +41,6 @@ public class GameManager : MonoBehaviour
     public Route route_prefab;
     [System.NonSerialized] public float[][] planet_dists;
     [System.NonSerialized] public Route[][] planet_routes;
-    private bool[] planets_ready;
 
     // Fleets
     [System.NonSerialized] public List<Fleet> fleets;
@@ -50,9 +49,11 @@ public class GameManager : MonoBehaviour
     // Events
     public System.Action on_initialized;
     public System.Action<Player> on_player_registered;
+    public System.Action on_all_players_registered;
     public System.Action<Timeline> on_time_set;
     public System.Action<Timeline, float> on_history_change;
     public System.Action<int, float> on_win;
+    public System.Action<NewFlagEvent> on_new_flag;
 
 
     // PUBLIC ACCESSORS
@@ -87,11 +88,11 @@ public class GameManager : MonoBehaviour
     {
         return num_bots + num_humans;
     }
-    public Player GetLocalPlayer()
+    public Player GetLocalHumanPlayer()
     {
         foreach (Player p in players.Values)
         {
-            if (p.isLocalPlayer) return p;
+            if (p.isLocalPlayer && !p.ai_controlled) return p;
         }
         return null;
     }
@@ -99,21 +100,27 @@ public class GameManager : MonoBehaviour
     {
         return players;
     }
+
+    public int GetFlagsToWin()
+    {
+        return flags_to_win;
+    }
     public int GetPlayerScore(Player player)
     {   
         return player_scores[player.player_id];
     }
-    public int GetWinner(int line, float time)
+    public int GetPlayerScore(int player_id)
+    {
+        return player_scores[player_id];
+    }
+    public int GetWinner()
     {
         // Win by having high enough score
         foreach (int player_id in players.Keys)
         {
-            if (player_scores[player_id] >= points_to_win)
+            if (player_scores[player_id] >= flags_to_win)
                 return player_id;
         }
-
-        // Win by clearing enemy at some line / time
-        //return timelines[line].GetStateWinner(time);
 
         return -1;
     }
@@ -127,25 +134,16 @@ public class GameManager : MonoBehaviour
         ++players_registered;
 
         if (on_player_registered != null) on_player_registered(player);
-        if (ArePlayersRegistered()) connection_screen.gameObject.SetActive(false);
+        if (ArePlayersRegistered())
+        {
+            // All players registered
+            if (on_all_players_registered != null)
+                on_all_players_registered();
+            connection_screen.gameObject.SetActive(false);
+        }
 
         Tools.Log("Registered player " + player.player_id 
             + (player.ai_controlled ? " (AI)" : ""), Color.blue);
-    }
-    public void GivePoint(int player_id)
-    {
-        //player_scores[player_id] += 1;
-    }
-    public void MarkConquest(int player_id, int timeline_id, int planet_id)
-    {
-        if (!player_conquests[player_id][timeline_id][planet_id])
-        {
-            player_conquests[player_id][timeline_id][planet_id] = true;
-            player_scores[player_id] += 1;
-        }
-
-        if (CurrentTimeline.LineID == timeline_id)
-            planets[planet_id].ShowFlag(player_id);
     }
     public void OnWin(int winner, int win_line, float win_time)
     {
@@ -190,24 +188,24 @@ public class GameManager : MonoBehaviour
     // Initialization
     private void OnWorldGenerated()
     {
-        // Conquests scores
-        player_conquests = new bool[GetNumPlayers()][][];
+        // Flag counts / score
+        player_flags = new bool[GetNumPlayers()][][];
         for (int i = 0; i < GetNumPlayers(); ++i)
         {
-            player_conquests[i] = new bool[timelines.Length][];
+            player_flags[i] = new bool[timelines.Length][];
             for (int j = 0; j < timelines.Length; ++j)
             {
-                player_conquests[i][j] = new bool[planets.Length];
+                player_flags[i][j] = new bool[planets.Length];
                 for (int k = 0; k < planets.Length; ++k)
                 {
                     bool owns = timelines[j].GetState(0).planet_ownerIDs[k] == i;
-                    if (owns) MarkConquest(i, j, k);
+                    if (owns) MarkFlag(i, j, k, 0);
                 }
             }
         }
 
         // Scores
-        points_to_win = (int)(num_planets * 1.8f);
+        flags_to_win = (int)(num_planets * 1.8f);
     }
     private IEnumerator GenerateWorld()
     {
@@ -370,32 +368,71 @@ public class GameManager : MonoBehaviour
         return list;
     }
 
+    // Flags
+    private void MarkFlag(int player_id, int timeline_id, int planet_id, float time)
+    {
+        if (!player_flags[player_id][timeline_id][planet_id])
+        {
+            // New flag
+            player_flags[player_id][timeline_id][planet_id] = true;
+            player_scores[player_id] += 1;
+
+            // UI
+            if (CurrentTimeline.LineID == timeline_id)
+                planets[planet_id].ShowFlag(player_id);
+
+            // Event
+            NewFlagEvent e = new NewFlagEvent();
+            e.timeline_id = timeline_id;
+            e.time = time;
+            e.player_id = player_id;
+            e.planet_id = planet_id;
+            if (on_new_flag != null) on_new_flag(e);
+        }   
+    }
+    private void UpdateFlagsUI()
+    {
+        for (int i = 0; i < GetNumPlayers(); ++i)
+        {
+            for (int j = 0; j < planets.Length; ++j)
+            {
+                planets[j].ShowFlag(i, player_flags[i][CurrentTimeline.LineID][j]);
+            }
+        }
+    }
+
     // Events
     private void OnTimeSet(Timeline line)
     {
         if (CurrentTimeline != line)
         {
             CurrentTimeline = line;
-            UpdateFlags();
+            UpdateFlagsUI();
         }
         if (on_time_set != null) on_time_set(line);
     }
     private void OnHistoryChange(Timeline line, float earliest)
     {
         if (on_history_change != null) on_history_change(line, earliest);
-    }
 
-    private void UpdateFlags()
-    {
-        for (int i = 0; i < GetNumPlayers(); ++i)
+        // Mark new flags
+        foreach (Timeline tl in timelines)
         {
-            for (int j = 0; j < planets.Length; ++j)
+            foreach (Turnover to in tl.GetTurnovers())
             {
-                planets[j].ShowFlag(i, player_conquests[i][CurrentTimeline.LineID][j]);
+                MarkFlag(to.new_owner_id, tl.LineID, to.planet_id, to.time);
             }
         }
     }
 
+}
+
+public class NewFlagEvent
+{
+    public int timeline_id;
+    public float time;
+    public int planet_id;
+    public int player_id;
 }
 
 public class WorldState
