@@ -1,0 +1,85 @@
+Initialize engine version: 5.4.1f1 (649f48bbbf0f)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: Intel(R) HD Graphics 4000 (ID=0x166)
+    Vendor:   Intel
+    VRAM:     912 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+- Completed reload, in  0.341 seconds
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.dll (this message is harmless)
+desktop: 1600x900 50Hz; virtual: 1600x900 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 0.752758 ms
+Initialize engine version: 5.4.1f1 (649f48bbbf0f)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: Intel(R) HD Graphics 4000 (ID=0x166)
+    Vendor:   Intel
+    VRAM:     912 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+- Completed reload, in  0.061 seconds
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.dll (this message is harmless)
+desktop: 1600x900 50Hz; virtual: 1600x900 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 0.741079 ms
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 5.498285 ms
+
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1445.
+Total: 1.038360 ms (FindLiveObjects: 0.094846 ms CreateObjectMapping: 0.050254 ms MarkObjects: 0.881934 ms  DeleteObjects: 0.010263 ms)
+
+<color=#0000FF>Registered player 0</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 6.300236 ms
+
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1444.
+Total: 1.214251 ms (FindLiveObjects: 0.099447 ms CreateObjectMapping: 0.047069 ms MarkObjects: 1.054994 ms  DeleteObjects: 0.012032 ms)
+
+<color=#0000FF>Registered player 1</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+<color=#0000FF>Registered player 0</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+<color=#0000FF>Registered player 1</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
+
+Setting up 1 worker threads for Enlighten.
+  Thread -> id: 410 -> priority: 1 
+Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:56810}
+Setting up 1 worker threads for Enlighten.
+  Thread -> id: 2290 -> priority: 1 

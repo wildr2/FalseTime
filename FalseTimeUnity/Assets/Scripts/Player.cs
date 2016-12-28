@@ -6,23 +6,32 @@ using System.Collections.Generic;
 public class Player : NetworkBehaviour
 {
     // General
-    [SyncVar] public int player_id; // assume arbitrary numbers
-    public bool ai_controlled = false;
-    private bool initialized = false;
+    [SyncVar] private int player_id = -1; // assume arbitrary numbers?
+    public int PlayerID
+    {
+        get
+        {
+            return player_id;
+        }
+        set
+        {
+            player_id = value;
+        }
+    } 
+    public bool AI { get; set; }
 
     // References
     private GameManager gm;
+    private Metaverse mv;
 
     // Selection
     private Planet pointed_planet;
     private Planet selected_planet;
-    private Route pointed_route;
 
     // Power
-    private float power_bar_seconds = 10;
-    private int max_power = 6;
-    private float req_power = 1;
     private float power = 0;
+    private int max_power = 6; // num bars
+    private float seconds_per_power = 10; // seconds per 1 bar of power 
 
     // Events
     public System.Action<float> on_power_change;
@@ -38,49 +47,37 @@ public class Player : NetworkBehaviour
     {
         return max_power;
     }
-    public float GetPowerReq()
-    {
-        return req_power;
-    }
 
 
     // PRIVATE MODIFIERS
 
-    private void Start()
+    private void Awake()
     {
         gm = FindObjectOfType<GameManager>();
+        mv = FindObjectOfType<Metaverse>();
+
+        // Events
+        mv.on_new_flag += OnNewFlag;
+
+
         StartCoroutine(Initialize());
-        if (isLocalPlayer) gm.on_history_change += OnHistoryChange;
     }
 
     private IEnumerator Initialize()
     {
-        while (!gm.IsInitialized()) yield return null;
+        while (!(mv.IsCreated() && PlayerID > -1))
+            yield return null;
 
         if (isLocalPlayer)
         {
-            if (!ai_controlled)
+            if (!AI)
             {
-                gm.on_time_set += OnTimeSet;
-
                 // Planet interaction
-                foreach (Planet planet in gm.GetPlanets())
+                foreach (Planet planet in mv.Planets)
                 {
                     // Planet mouse events
                     planet.on_pointer_enter += OnPlanetMouseEnter;
                     planet.on_pointer_exit += OnPlanetMouseExit;
-                }
-
-                // Route interaction
-                for (int i = 0; i < gm.planets.Length; ++i)
-                {
-                    for (int j = i; j < gm.planets.Length; ++j)
-                    {
-                        Route r = gm.planet_routes[i][j];
-                        if (r == null) continue;
-                        r.on_pointer_enter += OnRouteMouseEnter;
-                        r.on_pointer_exit += OnRouteMouseExit;
-                    }
                 }
 
                 StartCoroutine(HumanUpdate());
@@ -88,11 +85,9 @@ public class Player : NetworkBehaviour
             else StartCoroutine(AIUpdate());
         }
 
-        gm.RegisterPlayer(this);
-        
         SetPower(0);
 
-        initialized = true;
+        gm.RegisterPlayer(this);
     }
     private IEnumerator HumanUpdate()
     {
@@ -110,11 +105,6 @@ public class Player : NetworkBehaviour
                     // Click planet
                     OnPlanetClick(pointed_planet);
                 }
-                else if (pointed_route != null)
-                {
-                    // Click route
-                    OnRouteClick(pointed_route);
-                }
                 else
                 {
                     // Click away
@@ -122,11 +112,6 @@ public class Player : NetworkBehaviour
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Space))
-            {
-                // Switch timeline
-                gm.SwitchTimeline();
-            }
 
             yield return null;
         }
@@ -135,35 +120,32 @@ public class Player : NetworkBehaviour
     {
         while (true)
         {
-            while (!gm.IsGamePlaying() || gm.debug_solo) yield return null;
+            while (!gm.IsGamePlaying() || DataManager.Instance.debug_solo)
+                yield return null;
 
             PlayerCmd best_cmd = null;
-            Timeline best_cmd_line = null;
+            Universe best_cmd_uv = null;
             float best_score = float.MinValue;
 
             // Find best command
-            float power_on_start_search = power;
-
-            foreach (Timeline line in gm.GetTimelines())
+            foreach (Universe uv in mv.Universes)
             {
-                for (int time = 0; time < line.GetEndTime(); ++time)
+                for (int time = 0; time < Universe.TimeLength; ++time)
                 {
-                    WorldState state = line.GetState(time);
-                    bool[] planets_ready = line.GetPlanetsReady(state);
-                    UpdateRequiredPower(line, time);
+                    UVState state = uv.GetState(time);
+                    bool[] planets_ready = mv.GetPlanetsReady(uv, state);
 
-                    for (int i = 0; i < gm.planets.Length; ++i)
+                    for (int i = 0; i < mv.Planets.Length; ++i)
                     {
                         if (state.planet_ownerIDs[i] != player_id) continue; // skip non owned planets
                         if (!planets_ready[i]) continue; // skip planets that can't be commanded now
 
-                        for (int j = 0; j < gm.planets.Length; ++j)
+                        for (int j = 0; j < mv.Planets.Length; ++j)
                         {
-                            if (gm.planet_routes[i][j] == null) continue; // target planet cannot be selected planet
-                            if (req_power > power_on_start_search) continue; // skip too expensive commands
+                            if (mv.Routes[i][j] == null) continue; // target planet cannot be selected planet
 
-                            float flight_time = gm.planet_dists[i][j] / Flight.speed;
-                            WorldState projected_state = line.GetState(time + flight_time + 0.1f);
+                            float flight_time = mv.GetPlanetDistance(i,j) / Flight.speed;
+                            UVState projected_state = uv.GetState(time + flight_time + 0.1f);
 
                             int ships_to_send = Mathf.CeilToInt(state.planet_pops[i] / 2f);
 
@@ -175,10 +157,7 @@ public class Player : NetworkBehaviour
                             float score = 0;
 
                             // Current time
-                            score -= (time / line.GetEndTime()) * 1f;
-
-                            // Command cost
-                            score -= req_power;
+                            score -= (time / Universe.TimeLength) * 1f;
 
                             // Taking enemy planet
                             if (projected_state.planet_ownerIDs[j] != -1) score += 30;
@@ -190,14 +169,14 @@ public class Player : NetworkBehaviour
                             //score += (state.planet_pops[i] - ships_to_send) * 0.15f;
 
                             // Target planet size
-                            score += gm.planets[j].Size * 5f;
+                            score += mv.Planets[j].Size * 5f;
 
 
                             // Compare to current best command
                             if (score > best_score)
                             {
                                 best_cmd = new PlayerCmd(time, i, j, player_id);
-                                best_cmd_line = line;
+                                best_cmd_uv = uv;
                                 best_score = score;
                             }
                             //Tools.Log("j: " + j);
@@ -208,20 +187,20 @@ public class Player : NetworkBehaviour
                     //Tools.Log("time: " + time);
                     yield return null;
                 }
-                //Tools.Log("line: " + line.LineID);
+                //Tools.Log("uv: " + uv.UniverseID);
             }
 
-            //Tools.Log("here");
             if (best_cmd != null)
             {
                 //Tools.Log("p" + player_id + " Command");
+                while (!gm.IsGamePlaying() || power < 1) yield return null;
 
                 // Do best action
                 CmdIssuePlayerCmd(player_id, best_cmd.selected_planet_id, best_cmd.target_planet_id,
-                    best_cmd_line.LineID, best_cmd.time);
+                    best_cmd_uv.UniverseID, best_cmd.time);
 
                 // Cost
-                SetPower(power - req_power);
+                SetPower(power - 1);
             }
 
             yield return new WaitForSeconds(Random.Range(0, 5));
@@ -229,12 +208,14 @@ public class Player : NetworkBehaviour
     }
     private void Update()
     {
-        if (!isLocalPlayer) return;
+        if (isLocalPlayer) LocalUpdate();
+    }
+    private void LocalUpdate()
+    {
         if (!gm.IsGamePlaying()) return;
 
         // Power Growth
-        if (!ai_controlled) UpdateRequiredPower(gm.CurrentTimeline, gm.CurrentTimeline.Time);
-        SetPower(Mathf.Min(power + 1f / power_bar_seconds * Time.deltaTime, max_power));
+        SetPower(Mathf.Min(power + 1f / seconds_per_power * Time.deltaTime, max_power));
     }
 
     private void DeselectPlanet()
@@ -247,20 +228,8 @@ public class Player : NetworkBehaviour
     }
     private void SetPower(float value)
     {
-        power = gm.debug_powers ? max_power : value;
+        power = DataManager.Instance.debug_powers ? max_power : value;
         if (on_power_change != null) on_power_change(power);
-    }
-    private void UpdateRequiredPower(Timeline line, float time)
-    {
-        req_power = 1;
-        //foreach (PlayerCmd cmd in line.GetPlayerCmds())
-        //{
-        //    if (cmd.player_id == player_id)
-        //    {
-        //        float closeness = Mathf.Pow(1f / (Mathf.Abs(cmd.time - time) + 1), 4);
-        //        req_power += closeness * 5f;
-        //    }
-        //}
     }
 
     // Events
@@ -275,7 +244,7 @@ public class Player : NetworkBehaviour
 
         if (selected_planet == null)
         {
-            if (planet.OwnerID == player_id || gm.debug_solo)
+            if (planet.OwnerID == player_id || DataManager.Instance.debug_solo)
             {
                 if (planet.Ready)
                 {
@@ -293,31 +262,30 @@ public class Player : NetworkBehaviour
                 {
                     // Transfer
                     // Attack along route
-                    if (power >= req_power)
+                    if (power >= 1)
                     {
                         // Issue player command 
                         CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
-                            planet.PlanetID, gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
+                            planet.PlanetID, mv.View.Universe.UniverseID, mv.View.Time);
 
                         // Cost
-                        SetPower(power - req_power);
+                        SetPower(power - 1);
 
                         // UI
-                        //selected_planet.SetReady(false);
                         DeselectPlanet();
                     }
                 }
-                else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] != null)
+                else if (mv.Routes[selected_planet.PlanetID][planet.PlanetID] != null)
                 {
                     // Attack along route
-                    if (power >= req_power)
+                    if (power >= 1)
                     {
                         // Issue player command 
                         CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
-                            planet.PlanetID, gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
+                            planet.PlanetID, mv.View.Universe.UniverseID, mv.View.Time);
 
                         // Cost
-                        SetPower(power - req_power);
+                        SetPower(power - 1);
 
                         // UI
                         //selected_planet.ShowReady(false);
@@ -343,14 +311,20 @@ public class Player : NetworkBehaviour
         }
         else
         {
+            DataManager dm = DataManager.Instance;
+
             // Highlight planet to target
-            Route route = gm.planet_routes[selected_planet.PlanetID][planet.PlanetID];
-            if (route != null && route.IsTimeRoute(gm.CurrentTimeline.Time))
-                planet.ShowHighlight(Color.blue); // Time travel
+            Route route = mv.Routes[selected_planet.PlanetID][planet.PlanetID];
+
+            if (route != null && route.IsTimeRoute(mv.View.Time))
+                planet.ShowHighlight(dm.color_timetravel); // Time travel
+
             else if (planet.OwnerID == selected_planet.OwnerID)
-                planet.ShowHighlight(Color.green); // Transfer
-            else if (gm.planet_routes[selected_planet.PlanetID][planet.PlanetID] != null)
-                planet.ShowHighlight(Color.red); // Attack
+                planet.ShowHighlight(dm.color_friendly); // Transfer
+
+            else if (mv.Routes[selected_planet.PlanetID][planet.PlanetID] != null)
+                planet.ShowHighlight(dm.color_enemy); // Attack
+
             else
             {
                 //planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action
@@ -371,79 +345,44 @@ public class Player : NetworkBehaviour
             
     }
 
-    private void OnRouteClick(Route route)
+    private void OnNewFlag(NewFlagEvent e)
     {
-        if (route.IsTimeRoute())
+        if (isServer)
         {
-            float to_time = route.GetTimeTravelTime(gm.CurrentTimeline.Time);
-            if (to_time == gm.CurrentTimeline.Time)
-            {
-                // Not at either time route time - go to first 
-                gm.CurrentTimeline.SetTime(route.GetTRSecond() + 0.001f);
-            }
-            else
-            {
-                // At a time route time - go to corresponding time
-                if (route.IsCrossing()) gm.SwitchTimeline();
-                gm.CurrentTimeline.SetTime(to_time + 0.001f);
-            }
-            
-            
+            CmdCheckForWin();
         }
     }
-    private void OnRouteMouseEnter(Route route)
-    {
-        pointed_route = route;
-    }
-    private void OnRouteMouseExit(Route route)
-    {
-        pointed_route = null;
-    }
 
-    private void OnTimeSet(Timeline line)
-    {
-        if (!gm.IsGamePlaying()) return;
-
-        // Win condition
-        CmdCheckForWin(line.LineID, line.Time);
-    }
-    private void OnHistoryChange(Timeline line, float earliest)
-    {
-        if (!ai_controlled) UpdateRequiredPower(gm.CurrentTimeline, gm.CurrentTimeline.Time);
-        SetPower(power); // force ui update
-
-        // Win condition
-        CmdCheckForWin(gm.CurrentTimeline.LineID, gm.CurrentTimeline.Time);
-    }
 
     // Networking
     [Command]
-    private void CmdIssuePlayerCmd(int player_id, int selected_planet_id, int target_planet_id, int line, float time)
+    private void CmdIssuePlayerCmd(int player_id, int selected_planet_id,
+        int target_planet_id, int univ_id, float time)
     {
-        RpcReceivePlayerCmd(player_id, selected_planet_id, target_planet_id, line, time);
+        RpcReceivePlayerCmd(player_id, selected_planet_id, target_planet_id, univ_id, time);
     }
     [ClientRpc]
-    private void RpcReceivePlayerCmd(int player_id, int selected_planet_id, int target_planet_id, int line, float time)
+    private void RpcReceivePlayerCmd(int player_id, int selected_planet_id,
+        int target_planet_id, int univ_id, float time)
     {
         PlayerCmd cmd = new PlayerCmd(time, selected_planet_id, target_planet_id, player_id);
-        gm.GetTimelines()[line].AddPlayerCmd(cmd);
+        mv.Universes[univ_id].AddPlayerCmd(cmd);
     }
 
     [Command]
-    private void CmdCheckForWin(int line, float time)
+    private void CmdCheckForWin()
     {
         int winner = gm.GetWinner();
         if (winner >= 0)
         {
             // Win
-            RpcInformWin(winner, line, time);
+            RpcInformWin(winner);
         }
     }
     [ClientRpc]
-    private void RpcInformWin(int winner, int win_line, float win_time)
+    private void RpcInformWin(int winner)
     {
-        gm.OnWin(winner, win_line, win_time);
-
+        gm.OnWin(winner);
         DeselectPlanet();
     }
 }
