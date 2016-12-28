@@ -299,8 +299,6 @@ public class Player : NetworkBehaviour
     {
         pointed_planet = planet;
 
-        if (!gm.IsGamePlaying()) return;
-
         // Don't reselect selected planet
         if (planet == selected_planet) return;
 
@@ -309,7 +307,7 @@ public class Player : NetworkBehaviour
             // Highlight planet to select
             planet.ShowHighlight(new Color(0.5f, 0.5f, 0.5f));
         }
-        else
+        else if (gm.IsGamePlaying())
         {
             DataManager dm = DataManager.Instance;
 
@@ -334,8 +332,6 @@ public class Player : NetworkBehaviour
     private void OnPlanetMouseExit(Planet planet)
     {
         pointed_planet = null;
-
-        if (!gm.IsGamePlaying()) return;
 
         if (planet != selected_planet)
         {

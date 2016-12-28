@@ -65,7 +65,7 @@ public class MatchUI : MonoBehaviour
     
     private void OnPlayerWin(int winner)
     {
-        win_text.transform.parent.gameObject.SetActive(true);
+        win_text.gameObject.SetActive(true);
         win_text.text = dm.player_names[winner].ToUpper() + " WINS";
     }
     private void OnPlayerScore(int player_id)

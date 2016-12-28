@@ -101,6 +101,8 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        FindObjectOfType<Metaverse>().on_new_flag += OnNewFlag;
+
         // Players
         Players = new Player[DataManager.Instance.GetNumPlayers()];
         player_scores = new int[Players.Length];
