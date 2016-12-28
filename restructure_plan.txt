@@ -79,8 +79,14 @@ ViewController
     Set(timeline, time)
         this.timeline = timeline
         this.time = time
-        on_view_set()
+        state = timeline.GetState(time)
+        on_view_set(timeline, state)
+
+    OnRouteClick()
+        if timeroute: set...
 
 
 
 Player
+
+    

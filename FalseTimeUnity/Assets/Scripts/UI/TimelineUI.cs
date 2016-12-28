@@ -75,6 +75,8 @@ public class TimelineUI : EventTrigger
     private void Initialize()
     {
         Universe = mv.Universes[universe_id];
+        Universe.on_history_change += OnHistoryChange;
+
         OnViewSet(mv.View); // set initial view (not ready for first mv.on_view_set)
 
         SetMarkerPosition(knob, 0);
@@ -88,7 +90,7 @@ public class TimelineUI : EventTrigger
         knob.gameObject.SetActive(focused);
     }
 
-    private void OnHistoryChange(float earliest)
+    private void OnHistoryChange(Universe uv, float earliest)
     {
         UpdateTurnoverMarkers();
 
