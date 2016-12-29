@@ -25,6 +25,9 @@ public class TimelineUI : EventTrigger
     public TurnoverMarker to_marker_prefab;
     private List<TurnoverMarker> to_markers = new List<TurnoverMarker>();
 
+    // Goal posts
+    public FlagMarker flag_marker_prefab;
+
     // Change Flash
     public Image change_overlay;
     private Coroutine flash_change_routine;
@@ -69,7 +72,6 @@ public class TimelineUI : EventTrigger
 
         SetFocus(false);
 
-        mv.on_view_set += OnViewSet;
         mv.on_created += Initialize;
     }
     private void Initialize()
@@ -77,6 +79,8 @@ public class TimelineUI : EventTrigger
         Universe = mv.Universes[universe_id];
         Universe.on_history_change += OnHistoryChange;
 
+        mv.on_view_set += OnViewSet;
+        mv.on_new_flag += OnNewFlag;
         OnViewSet(mv.View); // set initial view (not ready for first mv.on_view_set)
 
         SetMarkerPosition(knob, 0);
@@ -108,6 +112,15 @@ public class TimelineUI : EventTrigger
         // Knob and clock
         SetMarkerPosition(knob, view.Time);
         UpdateClock(view.Time);
+    }
+    private void OnNewFlag(NewFlagEvent e)
+    {
+        if (e.universe_id != universe_id) return;
+
+        FlagMarker fm = Instantiate(flag_marker_prefab);
+        fm.transform.SetParent(line.transform, false);
+        fm.rt.anchoredPosition = SetX(fm.rt.anchoredPosition, XPosFromTime(e.time));
+        fm.Initialize(DataManager.Instance.GetPlayerColor(e.player_id));
     }
 
     // Interaction and UI
@@ -227,6 +240,11 @@ public class TimelineUI : EventTrigger
     private float DurationToTLDist(float duration)
     {
         return (duration / Universe.TimeLength) * line.rect.width;
+    }
+    private float XPosFromTime(float time, bool relative_to_line=false)
+    {
+        return Mathf.Lerp(0, line.rect.width, time / Universe.TimeLength)
+            + (relative_to_line ? 0 : line.offsetMin.x);
     }
     private float TimeFromMousePos(float mouse_x)
     {

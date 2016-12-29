@@ -31,7 +31,7 @@ public class Player : NetworkBehaviour
     // Power
     private float power = 0;
     private int max_power = 6; // num bars
-    private float seconds_per_power = 10; // seconds per 1 bar of power 
+    private float seconds_per_power = 15; // seconds per 1 bar of power 
 
     // Events
     public System.Action<float> on_power_change;

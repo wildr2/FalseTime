@@ -72,11 +72,11 @@ public class Planet : EventTrigger
         for (int i = 0; i < dm.num_universes; ++i)
         {
             flags[i] = new Image[dm.GetNumPlayers()];
-            for (int j = 0; j < flags.Length; ++j)
+            for (int j = 0; j < flags[i].Length; ++j)
             {
                 flags[i][j] = Instantiate(flag_prefab);
                 flags[i][j].transform.SetParent(flags_parent, false);
-                flags[i][j].color = dm.GetPlayerColor(i);
+                flags[i][j].color = dm.GetPlayerColor(j);
                 flags[i][j].gameObject.SetActive(false);
             }
         }
