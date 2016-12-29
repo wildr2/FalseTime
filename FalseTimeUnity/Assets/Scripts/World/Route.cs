@@ -103,7 +103,7 @@ public class Route : EventTrigger
     {
         // Color
         line.startColor = planet1.OwnerID == -1 ? default_color : planet1.sprite_sr.color;
-        line.endColor = planet2.OwnerID == -1 ? default_color : planet1.sprite_sr.color;
+        line.endColor = planet2.OwnerID == -1 ? default_color : planet2.sprite_sr.color;
 
         // Wormhole
         if (Wormhole != null)

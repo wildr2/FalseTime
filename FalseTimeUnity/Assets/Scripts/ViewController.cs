@@ -9,7 +9,7 @@ public class ViewController : MonoBehaviour
     private GameManager gm;
 
     // Timline scraping (keyboard)
-    private float scrape_speed = 30;
+    private float scrape_speed = 10;
     private float scrape_speed_fast = 60;
     private KeyCode scrape_fast_key = KeyCode.LeftShift;
 
