@@ -42,7 +42,6 @@ public class DataManager : MonoBehaviour
     public int num_bots = 0;
     public Color[] color_options;
     public int[] player_color_ids;
-    public bool random_colors = false;
     public string[] color_names;
 
     // Key Colors
@@ -92,6 +91,12 @@ public class DataManager : MonoBehaviour
 
     // PUBLIC MODIFIERS
 
+    public void RandomizeColorChoices()
+    {
+        player_color_ids = Tools.ShuffleArray(
+           Enumerable.Range(0, color_options.Length).ToArray());
+    }
+
 
     // PRIVATE / PROTECTED MODIFIERS
 
@@ -112,12 +117,7 @@ public class DataManager : MonoBehaviour
         }
     }
     private void Initialize()
-    {
-        if (random_colors)
-        {
-            player_color_ids = Tools.ShuffleArray(
-               Enumerable.Range(0, color_options.Length).ToArray());
-        }
+    {   
     }
 
 }

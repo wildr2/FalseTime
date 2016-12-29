@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using UnityEditor;
 
 public class TimelineUI : EventTrigger
 {
@@ -263,16 +262,5 @@ public class TimelineUI : EventTrigger
     {
         v.y = y;
         return v;
-    }
-
-}
-
-
-[CustomEditor(typeof(TimelineUI))]
-public class TimelineUIEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        base.OnInspectorGUI();
     }
 }
