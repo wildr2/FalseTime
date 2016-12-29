@@ -78,6 +78,17 @@ public class DataManager : MonoBehaviour
         return color_names[player_color_ids[id]];
     }
 
+    public Color GetActionColor(Player.ActionType action)
+    {
+        switch (action)
+        {
+            case Player.ActionType.None: return Color.white;
+            case Player.ActionType.Attack: return color_enemy;
+            case Player.ActionType.Transfer: return color_friendly;
+            case Player.ActionType.Wormhole: return color_timetravel;
+        }
+        return Color.white;
+    }
 
     // PUBLIC MODIFIERS
 

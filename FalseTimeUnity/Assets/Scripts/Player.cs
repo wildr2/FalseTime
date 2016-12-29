@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 public class Player : NetworkBehaviour
 {
+    public enum ActionType { None, Attack, Transfer, Wormhole }
+
     // General
     [SyncVar] private int player_id = -1; // assume arbitrary numbers?
     public int PlayerID
@@ -17,7 +19,7 @@ public class Player : NetworkBehaviour
         {
             player_id = value;
         }
-    } 
+    }
     public bool AI { get; set; }
 
     // References
@@ -27,9 +29,18 @@ public class Player : NetworkBehaviour
     // Selection
     private Planet pointed_planet;
     private Planet selected_planet;
+    private ActionType highlighted_action;
 
     // Power
     private float power = 0;
+    private static readonly Dictionary<ActionType, float> req_power
+        = new Dictionary<ActionType, float>()
+    {
+        { ActionType.None, 0 },
+        { ActionType.Attack, 1 },
+        { ActionType.Transfer, 0.1f },
+        { ActionType.Wormhole, 1.5f }
+    };
     private int max_power = 6; // num bars
     private float seconds_per_power = 15; // seconds per 1 bar of power 
 
@@ -39,6 +50,10 @@ public class Player : NetworkBehaviour
 
     // PUBLIC ACCESSORS
 
+    public ActionType GetHighlightedAction()
+    {
+        return highlighted_action;
+    }
     public float GetPower()
     {
         return power;
@@ -46,6 +61,14 @@ public class Player : NetworkBehaviour
     public float GetPowerMax()
     {
         return max_power;
+    }
+    public float GetReqPower()
+    {
+        return req_power[highlighted_action];
+    }
+    public bool HasEnoughPower()
+    {
+        return power >= req_power[highlighted_action];
     }
 
 
@@ -191,15 +214,15 @@ public class Player : NetworkBehaviour
 
             if (best_cmd != null)
             {
-                //Tools.Log("p" + player_id + " Command");
-                while (gm.State != MatchState.Play || power < 1) yield return null;
+                highlighted_action = ActionType.Attack;
+                while (gm.State != MatchState.Play || !HasEnoughPower()) yield return null;
 
                 // Do best action
                 CmdIssuePlayerCmd(player_id, best_cmd.selected_planet_id, best_cmd.target_planet_id,
                     best_cmd_uv.UniverseID, best_cmd.time);
 
                 // Cost
-                SetPower(power - 1);
+                UseReqPower();
             }
 
             yield return new WaitForSeconds(Random.Range(0, 5));
@@ -229,6 +252,10 @@ public class Player : NetworkBehaviour
     {
         power = DataManager.Instance.debug_powers ? max_power : value;
         if (on_power_change != null) on_power_change(power);
+    }
+    private void UseReqPower()
+    {
+        SetPower(power - req_power[highlighted_action]);
     }
 
     // Events
@@ -261,14 +288,14 @@ public class Player : NetworkBehaviour
                 {
                     // Transfer
                     // Attack along route
-                    if (power >= 1)
+                    if (HasEnoughPower())
                     {
                         // Issue player command 
                         CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
                             planet.PlanetID, mv.View.Universe.UniverseID, mv.View.Time);
 
                         // Cost
-                        SetPower(power - 1);
+                        UseReqPower();
 
                         // UI
                         DeselectPlanet();
@@ -277,14 +304,14 @@ public class Player : NetworkBehaviour
                 else if (mv.Routes[selected_planet.PlanetID][planet.PlanetID] != null)
                 {
                     // Attack along route
-                    if (power >= 1)
+                    if (HasEnoughPower())
                     {
                         // Issue player command 
                         CmdIssuePlayerCmd(selected_planet.OwnerID, selected_planet.PlanetID,
                             planet.PlanetID, mv.View.Universe.UniverseID, mv.View.Time);
 
                         // Cost
-                        SetPower(power - 1);
+                        UseReqPower();
 
                         // UI
                         //selected_planet.ShowReady(false);
@@ -314,18 +341,23 @@ public class Player : NetworkBehaviour
             Route route = mv.Routes[selected_planet.PlanetID][planet.PlanetID];
 
             if (route != null && route.Wormhole != null && route.Wormhole.IsOpen(mv.View.Time))
-                planet.ShowHighlight(dm.color_timetravel); // Time travel
-
-            else if (planet.OwnerID == selected_planet.OwnerID)
-                planet.ShowHighlight(dm.color_friendly); // Transfer
-
-            else if (mv.Routes[selected_planet.PlanetID][planet.PlanetID] != null)
-                planet.ShowHighlight(dm.color_enemy); // Attack
-
-            else
             {
-                //planet.ShowHighlight(new Color(1, 1, 1, 0.5f)); // No action
+                highlighted_action = ActionType.Wormhole;
+                planet.ShowHighlight(dm.GetActionColor(highlighted_action));
             }
+            else if (planet.OwnerID == selected_planet.OwnerID)
+            {
+                highlighted_action = ActionType.Transfer;
+                planet.ShowHighlight(dm.GetActionColor(highlighted_action));
+            }
+            else if (mv.Routes[selected_planet.PlanetID][planet.PlanetID] != null)
+            {
+                highlighted_action = ActionType.Attack;
+                planet.ShowHighlight(dm.GetActionColor(highlighted_action));
+            }
+            else { } // No action
+
+            
         }
     }
     private void OnPlanetMouseExit(Planet planet)
@@ -336,6 +368,7 @@ public class Player : NetworkBehaviour
         {
             // Unhighlight not selected planet
             planet.HideHighlight();
+            highlighted_action = ActionType.None;
         }
             
     }

@@ -26,6 +26,8 @@ public class PowerUI : MonoBehaviour
     private void OnPowerChange(float power)
     {
         bar.SetFill(power / player.GetPowerMax());
-        bar.SetFillGoal(1 / player.GetPowerMax());
+        bar.SetFillGoal(
+            player.GetReqPower() / player.GetPowerMax(), 
+            DataManager.Instance.GetActionColor(player.GetHighlightedAction()));
     }
 }
