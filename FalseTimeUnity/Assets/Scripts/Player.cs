@@ -276,7 +276,10 @@ public class Player : NetworkBehaviour
                 {
                     // Select planet
                     selected_planet = planet;
-                    selected_planet.ShowHighlight(new Color(0.75f, 0.75f, 0.75f));
+                    //new Color(0.75f, 0.75f, 0.75f)
+                    selected_planet.ShowHighlight(
+                        Color.Lerp(DataManager.Instance.GetPlayerColor(PlayerID),
+                        Color.black, 0.2f));
                 }
             }
         }
