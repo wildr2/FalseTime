@@ -85,6 +85,10 @@ public class Metaverse : MonoBehaviour
     {
         SetView(time, View.Universe);
     }
+    public void SetView(UnivTime ut)
+    {
+        SetView(ut.time, Universes[ut.universe]);
+    }
     public void SetView(float time, int universe_id)
     {
         SetView(time, Universes[universe_id]);
@@ -319,7 +323,7 @@ public class Metaverse : MonoBehaviour
         {
             foreach (Route route in routes)
             {
-                if (route != null) route.UpdateVisuals(View.Time);
+                if (route != null) route.UpdateVisuals(View);
             }
         }
     }
@@ -422,11 +426,25 @@ public class View
             return State.time;
         }
     }
+    public UnivTime UT { get; private set; }
 
     public View(Universe universe, UVState state)
     {
         Universe = universe;
         State = state;
+        UT = new UnivTime(universe.UniverseID, Time);
+    }
+}
+
+public class UnivTime
+{
+    public int universe;
+    public float time;
+
+    public UnivTime(int universe, float time)
+    {
+        this.universe = universe;
+        this.time = time;
     }
 }
 

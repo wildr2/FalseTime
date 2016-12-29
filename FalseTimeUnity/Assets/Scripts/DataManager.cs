@@ -41,9 +41,9 @@ public class DataManager : MonoBehaviour
     public int num_humans = 2;
     public int num_bots = 0;
     public Color[] color_options;
-    public int[] player_color_ids = { 0, 0, 0, 0, 0, 0 };
+    public int[] player_color_ids;
     public bool random_colors = false;
-    public string[] player_names;
+    public string[] color_names;
 
     // Key Colors
     public Color color_enemy;
@@ -73,7 +73,10 @@ public class DataManager : MonoBehaviour
     {
         return color_options[player_color_ids[id]];
     }
-
+    public string GetPlayerColorName(int id)
+    {
+        return color_names[player_color_ids[id]];
+    }
 
 
     // PUBLIC MODIFIERS

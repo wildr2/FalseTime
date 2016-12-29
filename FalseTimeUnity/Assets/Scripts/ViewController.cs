@@ -47,7 +47,7 @@ public class ViewController : MonoBehaviour
     }
     private void Update()
     {
-        if (!gm.IsGamePlaying()) return;
+        if (gm.State == MatchState.Setup) return;
 
         UpdateKBControl();
     }
@@ -82,7 +82,7 @@ public class ViewController : MonoBehaviour
     private void OnRoutePointerEnter(Route route)
     {
         // Highlight route
-        Color c = route.IsTimeRoute() ?
+        Color c = route.Wormhole != null ?
             Tools.SetColorAlpha(DataManager.Instance.color_timetravel, 0.15f) :
             Tools.SetColorAlpha(Color.white, 0.05f);
 
@@ -94,22 +94,19 @@ public class ViewController : MonoBehaviour
     }
     private void OnRouteClick(Route route)
     {
-        Tools.Log("here");
+        if (gm.State == MatchState.Setup) return;
 
-        if (!gm.IsGamePlaying()) return;
-        if (route.IsTimeRoute())
+        if (route.Wormhole != null)
         {
-            float to_time = route.GetTimeTravelTime(mv.View.Time);
-            if (to_time == mv.View.Time)
+            if (route.Wormhole.IsOpen(mv.View.Time))
             {
-                // Not at either time route time - go to second tr time
-                mv.SetView(route.GetTRSecond() + 0.001f);
+                UnivTime exit = route.Wormhole.GetExit(mv.View.UT);
+                mv.SetView(exit);
             }
             else
             {
-                // At a time route time - go to corresponding time and universe
-                mv.SetView(to_time + 0.001f,
-                    mv.Universes[route.GetTimeTravelUV(mv.View.Time)]);
+                // Not at wormhole opening - go to tail time
+                mv.SetView(route.Wormhole.TailTime + 0.001f);
             }
         }
     }

@@ -14,14 +14,13 @@ Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\False
 Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
 Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.341 seconds
+- Completed reload, in  0.267 seconds
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.dll (this message is harmless)
 desktop: 1600x900 50Hz; virtual: 1600x900 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.752758 ms
 Initialize engine version: 5.4.1f1 (649f48bbbf0f)
 GfxDevice: creating device client; threaded=1
 Direct3D:
@@ -38,19 +37,20 @@ Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\False
 Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
 Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.061 seconds
+- Completed reload, in  0.048 seconds
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\2h_build_Data\Managed\System.dll (this message is harmless)
 desktop: 1600x900 50Hz; virtual: 1600x900 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.741079 ms
+UnloadTime: 1.797125 ms
+UnloadTime: 2.220395 ms
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 5.498285 ms
+UnloadTime: 16.759842 ms
 
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1445.
-Total: 1.038360 ms (FindLiveObjects: 0.094846 ms CreateObjectMapping: 0.050254 ms MarkObjects: 0.881934 ms  DeleteObjects: 0.010263 ms)
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1449.
+Total: 0.889007 ms (FindLiveObjects: 0.095554 ms CreateObjectMapping: 0.035036 ms MarkObjects: 0.747799 ms  DeleteObjects: 0.009909 ms)
 
 <color=#0000FF>Registered player 0</color>
 
@@ -58,10 +58,10 @@ Total: 1.038360 ms (FindLiveObjects: 0.094846 ms CreateObjectMapping: 0.050254 m
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
 
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 6.300236 ms
+UnloadTime: 9.439334 ms
 
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1444.
-Total: 1.214251 ms (FindLiveObjects: 0.099447 ms CreateObjectMapping: 0.047069 ms MarkObjects: 1.054994 ms  DeleteObjects: 0.012032 ms)
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 1447.
+Total: 0.607299 ms (FindLiveObjects: 0.079628 ms CreateObjectMapping: 0.030435 ms MarkObjects: 0.490511 ms  DeleteObjects: 0.006370 ms)
 
 <color=#0000FF>Registered player 1</color>
 
@@ -79,7 +79,13 @@ Total: 1.214251 ms (FindLiveObjects: 0.099447 ms CreateObjectMapping: 0.047069 m
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 42)
 
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 410 -> priority: 1 
-Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:56810}
+  Thread -> id: 688 -> priority: 1 
+Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:7777}
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 7.767490 ms
+
+Unloading 32 unused Assets to reduce memory usage. Loaded Objects now: 345.
+Total: 4.592969 ms (FindLiveObjects: 0.044238 ms CreateObjectMapping: 0.039991 ms MarkObjects: 4.436543 ms  DeleteObjects: 0.071488 ms)
+
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 2290 -> priority: 1 
+  Thread -> id: 1b38 -> priority: 1 

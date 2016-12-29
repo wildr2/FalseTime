@@ -119,9 +119,9 @@ public class TimelineUI : EventTrigger
             {
                 Route r = mv.Routes[i][j];
                 if (r == null) continue;
-                if (r.IsTimeRoute())
+                if (r.Wormhole != null)
                 {
-                    float size = Mathf.Lerp(0.5f, 2f, (r.GetTRSecond() - r.GetTRFirst())
+                    float size = Mathf.Lerp(0.5f, 2f, (r.Wormhole.TailTime - r.Wormhole.HeadTime)
                         / Universe.TimeLength);
 
                     // Right pointing arrow
@@ -130,7 +130,7 @@ public class TimelineUI : EventTrigger
                     Text txt = marker.GetComponent<Text>();
                     txt.fontSize = (int)(txt.fontSize * size);
                     txt.text = ">";
-                    SetMarkerPosition(marker, r.GetTRFirst());
+                    SetMarkerPosition(marker, r.Wormhole.HeadTime);
 
                     // Left pointing arrow
                     marker = Instantiate(tr_marker_prefab);
@@ -138,7 +138,7 @@ public class TimelineUI : EventTrigger
                     txt = marker.GetComponent<Text>();
                     txt.text = "<";
                     txt.fontSize = (int)(txt.fontSize * size);
-                    SetMarkerPosition(marker, r.GetTRSecond());
+                    SetMarkerPosition(marker, r.Wormhole.TailTime);
                 }
             }
         }

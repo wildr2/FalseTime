@@ -93,7 +93,7 @@ public class Player : NetworkBehaviour
     {
         while (true)
         {
-            while (!gm.IsGamePlaying()) yield return null;
+            while (gm.State != MatchState.Play) yield return null;
 
             // Interaction
             bool click = Input.GetMouseButtonDown(0);
@@ -112,7 +112,6 @@ public class Player : NetworkBehaviour
                 }
             }
 
-
             yield return null;
         }
     }
@@ -120,7 +119,7 @@ public class Player : NetworkBehaviour
     {
         while (true)
         {
-            while (!gm.IsGamePlaying() || DataManager.Instance.debug_solo)
+            while (gm.State != MatchState.Play || DataManager.Instance.debug_solo)
                 yield return null;
 
             PlayerCmd best_cmd = null;
@@ -193,7 +192,7 @@ public class Player : NetworkBehaviour
             if (best_cmd != null)
             {
                 //Tools.Log("p" + player_id + " Command");
-                while (!gm.IsGamePlaying() || power < 1) yield return null;
+                while (gm.State != MatchState.Play || power < 1) yield return null;
 
                 // Do best action
                 CmdIssuePlayerCmd(player_id, best_cmd.selected_planet_id, best_cmd.target_planet_id,
@@ -212,7 +211,7 @@ public class Player : NetworkBehaviour
     }
     private void LocalUpdate()
     {
-        if (!gm.IsGamePlaying()) return;
+        if (gm.State != MatchState.Play) return;
 
         // Power Growth
         SetPower(Mathf.Min(power + 1f / seconds_per_power * Time.deltaTime, max_power));
@@ -240,7 +239,7 @@ public class Player : NetworkBehaviour
 
     private void OnPlanetClick(Planet planet)
     {
-        if (!gm.IsGamePlaying()) return;
+        if (gm.State != MatchState.Play) return;
 
         if (selected_planet == null)
         {
@@ -307,14 +306,14 @@ public class Player : NetworkBehaviour
             // Highlight planet to select
             planet.ShowHighlight(new Color(0.5f, 0.5f, 0.5f));
         }
-        else if (gm.IsGamePlaying())
+        else if (gm.State == MatchState.Play)
         {
             DataManager dm = DataManager.Instance;
 
             // Highlight planet to target
             Route route = mv.Routes[selected_planet.PlanetID][planet.PlanetID];
 
-            if (route != null && route.IsTimeRoute(mv.View.Time))
+            if (route != null && route.Wormhole != null && route.Wormhole.IsOpen(mv.View.Time))
                 planet.ShowHighlight(dm.color_timetravel); // Time travel
 
             else if (planet.OwnerID == selected_planet.OwnerID)

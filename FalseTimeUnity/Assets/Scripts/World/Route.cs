@@ -13,20 +13,21 @@ public class Route : EventTrigger
     public RectTransform canvas;
 
     // Graphics
-    private LineRenderer line;
     public Color default_color;
-    private float dist;
     public Image highlight;
 
+    private LineRenderer line;
+    private Vector2 line_start, line_end;
+    private float line_dist;
+
     // General
-    private Planet p1, p2;
+    private Planet planet1, planet2;
 
-    // Time route
-    private float tr_first = -1, tr_second = -1, tr_len = 0;
-    private bool crossing = false;
+    // Wormholes
+    public Wormhole Wormhole { get; private set; }
 
-    private static List<Pair<float, float>> tr_times_pool;
-    private static int time_routes_count = 0;
+    private static List<Pair<float, float>> wh_times_pool;
+    private static int num_wormholes = 0;
 
     // Events
     public System.Action<Route> on_pointer_enter;
@@ -36,147 +37,80 @@ public class Route : EventTrigger
 
     // PUBLIC ACCESSORS
 
-    public bool IsCrossing()
-    {
-        return crossing;
-    }
-    public bool IsTimeRoute()
-    {
-        return tr_len > 0;
-    }
-    public bool IsTimeRoute(float time)
-    {
-        return GetTimeTravelTime(time) != time;
-    }
-    public float GetTimeTravelTime(float from_time)
-    {
-        if (tr_len > 0)
-        {
-            if (from_time >= tr_first && from_time < tr_first + tr_len)
-            {
-                return tr_second + from_time - tr_first;
-            }
-            else if (from_time >= tr_second && from_time < tr_second + tr_len)
-            {
-                return tr_first + from_time - tr_second;
-            }
-        }
-        return from_time;
-    }
-    public int GetTimeTravelUV(float from_time)
-    {
-        return 1;
-    }
-    public float GetTRFirst()
-    {
-        return tr_first;
-    }
-    public float GetTRSecond()
-    {
-        return tr_second;
-    }
-
 
     // PUBLIC MODIFIERS
 
-    public void Initialize(Planet p1, Planet p2)
+    public void Initialize(Planet planet1, Planet planet2)
     {
-        this.p1 = p1;
-        this.p2 = p2;
+        this.planet1 = planet1;
+        this.planet2 = planet2;
 
-        dist = Vector2.Distance(p1.transform.position, p2.transform.position);
+        // Line
+        line_dist = Vector2.Distance(planet1.transform.position, planet2.transform.position);
+        line_start = new Vector2(-line_dist / 2f, 0);
+        line_end = -line_start;
+
         line.numPositions = 2;
-        Vector2 pos1 = new Vector2(-dist / 2f, 0);
-        Vector2 pos2 = -pos1;
-        line.SetPosition(0, pos1);
-        line.SetPosition(1, pos2);
+        line.SetPosition(0, line_start);
+        line.SetPosition(1, line_end);
 
-        Vector2 p1pos = p1.transform.position;
-        Vector2 p2pos = p2.transform.position;
+        // Positioning
+        Vector2 p1pos = planet1.transform.position;
+        Vector2 p2pos = planet2.transform.position;
+
         transform.position = Vector2.Lerp(p1pos, p2pos, 0.5f);
         transform.rotation = Quaternion.Euler(0, 0, Mathf.Rad2Deg * Mathf.Atan2(p2pos.y - p1pos.y, p2pos.x - p1pos.x));
-        canvas.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, dist);
+        canvas.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, line_dist);
 
-        // Time route
-        if (Random.value < 0.5f)
-        {
-            if (time_routes_count >= tr_times_pool.Count)
-            {
-                Debug.LogWarning("Ran out of time route times");
-            }
-            else
-            {
-                tr_len = 5;
 
-                tr_first = tr_times_pool[time_routes_count].First;
-                tr_second = tr_times_pool[time_routes_count].Second;
-                ++time_routes_count;
-
-                if (Random.value < 0.5f)
-                {
-                    // Crossing time route route
-                    crossing = true;
-                    line.material.mainTextureScale = new Vector2(50f * (dist / 4f), 1);
-
-                    int n = 15;
-                    float phase = Random.value * 360f;
-                    line.numPositions = n;
-                    for (int i = 0; i < n; ++i)
-                    {
-                        float t = (float)i / n;
-                        line.SetPosition(i, Vector2.Lerp(pos1, pos2, t)
-                            + new Vector2(0, Mathf.Sin(t*180f + phase) * 0.1f));
-                    }
-                }
-                else
-                {   // Non crossing time route
-                    line.material.mainTextureScale = new Vector2(15f * (dist / 4f), 1);
-
-                    int n = 15;
-                    float phase = Random.value * 360f;
-                    line.numPositions = n;
-                    for (int i = 0; i < n; ++i)
-                    {
-                        float t = (float)i / n;
-                        line.SetPosition(i, Vector2.Lerp(pos1, pos2, t)
-                            + new Vector2(0, Mathf.Sin(t * 180f + phase) * 0.1f));
-                    }
-                }
-            }
-        }
-        if (!IsTimeRoute())
+        // Wormhole
+        if (Random.value < 0.5f) MakeWormhole();
+       
+        if (Wormhole == null)
         {
             // Regular route
-            line.material.mainTextureScale = new Vector2(15f * (dist / 4f), 1);
+            line.material.mainTextureScale = new Vector2(15f * (line_dist / 4f), 1);
         }
-    }
-    public void UpdateVisuals(float time)
-    {
-        // Color
-        line.startColor = p1.OwnerID == -1 ? default_color : p1.sprite_sr.color;
-        line.endColor = p2.OwnerID == -1 ? default_color : p1.sprite_sr.color;
-
-        // Time route
-        if (tr_len > 0)
+        else
         {
-            if (time > tr_first && time < tr_first + tr_len)
+            // Route with wormhole - curved route
+            CreateCurvedLine();
+
+            if (Wormhole.CrossUniverse())
             {
-                // Active (First tr time)
-                ShowActiveTimeRoute();
-            }
-            else if (time > tr_second && time < tr_second + tr_len)
-            {
-                // Active (Second tr time)
-                ShowActiveTimeRoute();
+                line.material.mainTextureScale = new Vector2(50f * (line_dist / 4f), 1);
             }
             else
             {
-                // Inactive
-                ShowInactiveTimeRoute();
+                line.material.mainTextureScale = new Vector2(15f * (line_dist / 4f), 1);
             }
         }
     }
+    private void CreateCurvedLine()
+    {
+        int n = 15;
+        float phase = Random.value * 360f;
+        line.numPositions = n;
+        for (int i = 0; i < n; ++i)
+        {
+            float t = (float)i / n;
+            line.SetPosition(i, Vector2.Lerp(line_start, line_end, t)
+                + new Vector2(0, Mathf.Sin(t * 180f + phase) * 0.1f));
+        }
+    }
 
+    public void UpdateVisuals(View view)
+    {
+        // Color
+        line.startColor = planet1.OwnerID == -1 ? default_color : planet1.sprite_sr.color;
+        line.endColor = planet2.OwnerID == -1 ? default_color : planet1.sprite_sr.color;
+
+        // Wormhole
+        if (Wormhole != null)
+        {
+            ShowWormholeOpen(view, Wormhole.IsOpen(view.Time));
+        }
+    }
     public void ShowHighlight(Color color)
     {
         highlight.gameObject.SetActive(true);
@@ -200,7 +134,6 @@ public class Route : EventTrigger
     public override void OnPointerClick(PointerEventData eventData)
     {
         if (on_pointer_click != null) on_pointer_click(this);
-        Tools.Log("here");
         base.OnPointerClick(eventData);
     }
 
@@ -210,40 +143,72 @@ public class Route : EventTrigger
     private void Awake()
     {
         line = GetComponent<LineRenderer>();
-        if (tr_times_pool == null) GenerateTimeRoutePool();
+        if (wh_times_pool == null) GenWormholeTimePool();
     }
-    private void GenerateTimeRoutePool()
+    private void GenWormholeTimePool()
     {
         // Generate possible time route times
         bool[] taken = new bool[100];
 
-        int[] tr_first_pool = Tools.ShuffleArray(Enumerable.Range(2, 68).ToArray());
-        int[] tr_second_pool = Tools.ShuffleArray(Enumerable.Range(25, 68).ToArray());
+        int[] wh_head_pool = Tools.ShuffleArray(Enumerable.Range(2, 68).ToArray());
+        int[] wh_tail_pool = Tools.ShuffleArray(Enumerable.Range(25, 68).ToArray());
 
-        tr_times_pool = new List<Pair<float, float>>();
+        wh_times_pool = new List<Pair<float, float>>();
 
-        for (int i = 0; i < Mathf.Min(tr_first_pool.Length, tr_second_pool.Length); ++i)
+        for (int i = 0; i < Mathf.Min(wh_head_pool.Length, wh_tail_pool.Length); ++i)
         {
-            int first = tr_first_pool[i];
-            int second = tr_second_pool[i];
+            int first = wh_head_pool[i];
+            int second = wh_tail_pool[i];
             if (!taken[first] && !taken[second] && second - first > 15)
             {
-                tr_times_pool.Add(new Pair<float, float>(first, second));
+                wh_times_pool.Add(new Pair<float, float>(first, second));
                 taken[first] = true;
                 taken[second] = true;
             }
         }
     }
+    private bool MakeWormhole()
+    {
+        if (num_wormholes >= wh_times_pool.Count)
+        {
+            Debug.LogWarning("Ran out of time route times");
+            return false;
+        }
+        else
+        {
+            float head_time = wh_times_pool[num_wormholes].First;
+            float tail_time = wh_times_pool[num_wormholes].Second;
+            bool cross_uv = Random.Range(0f, 1f) < 0.5f;
+            
+            Wormhole = new Wormhole(head_time, tail_time, cross_uv);
+            ++num_wormholes;
 
-    private void ShowActiveTimeRoute()
-    {
-        line.startWidth = 0.2f;
-        line.endWidth = 0.2f;
+            return true;
+        }
     }
-    private void ShowInactiveTimeRoute()
+
+    private void ShowWormholeOpen(View view, bool open)
     {
-        line.startWidth = 0.03f;
-        line.endWidth = 0.03f;
+        if (open)
+        {
+            Keyframe[] keys = new Keyframe[60];
+            for (int i = 0; i < keys.Length; ++i)
+            {
+                float t = (float)i / keys.Length;
+                float w = (Mathf.Sin(t * Mathf.PI * 8f + view.Time * 2f) / 2f + 0.5f) * 0.25f + 0.03f;
+                keys[i] = new Keyframe(t, w);
+            }
+
+            line.widthCurve = new AnimationCurve(keys);
+            //line.startWidth = 0.2f;
+            //line.endWidth = 0.2f;
+        }
+        else
+        {
+            line.widthCurve = AnimationCurve.Linear(0, 0.03f, 1, 0.03f);
+            //line.startWidth = 0.03f;
+            //line.endWidth = 0.03f;
+        }
     }
 }
 
@@ -255,3 +220,58 @@ public class RouteEditor : Editor
         base.OnInspectorGUI();
     }
 }
+
+
+public class Wormhole
+{
+    public const float OpenDuration = 5;
+    public float HeadTime { get; private set; }
+    public float TailTime { get; private set; }
+    private bool cross_universe = false;
+    
+    public Wormhole(float head_time, float tail_time, bool cross_universe)
+    {
+        HeadTime = head_time;
+        TailTime = tail_time;
+        this.cross_universe = cross_universe;
+    }
+
+    public bool CrossUniverse()
+    {
+        return cross_universe;
+    }
+    public bool CrossTime()
+    {
+        return HeadTime != TailTime;
+    }
+    public bool IsHeadOpen(float time)
+    {
+        return time >= HeadTime && time < HeadTime + OpenDuration;
+    }
+    public bool IsTailOpen(float time)
+    {
+        return time >= TailTime && time < TailTime + OpenDuration;
+    }
+    public bool IsOpen(float time)
+    {
+        return IsHeadOpen(time) || IsTailOpen(time);
+    }
+    public UnivTime GetExit(UnivTime ut)
+    {
+        return GetExit(ut.universe, ut.time);
+    }
+    public UnivTime GetExit(int entry_uv, float entry_time)
+    {
+        // --- relies on a 2 universe system
+        int exit_uv = cross_universe ? 1 - entry_uv : entry_uv;
+
+        if (IsHeadOpen(entry_time))
+            return new UnivTime(exit_uv, TailTime + entry_time - HeadTime);
+
+        else if (IsTailOpen(entry_time))
+            return new UnivTime(exit_uv, HeadTime + entry_time - TailTime);
+
+        return new UnivTime(entry_uv, entry_time);
+    }
+}
+

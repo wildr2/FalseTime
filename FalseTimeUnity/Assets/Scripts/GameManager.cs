@@ -3,10 +3,12 @@ using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
 
+public enum MatchState { Setup, Play, PostGame }
+
 public class GameManager : MonoBehaviour
 {
     // General
-    private bool game_over = false;
+    public MatchState State { get; private set; }
 
     // Players
     public Player[] Players { get; private set; } // keys are player ids
@@ -29,14 +31,6 @@ public class GameManager : MonoBehaviour
     public bool ArePlayersRegistered()
     {
         return players_registered == DataManager.Instance.GetNumPlayers();
-    }
-    public bool IsGameOver()
-    {
-        return game_over;
-    }
-    public bool IsGamePlaying()
-    {
-        return ArePlayersRegistered() && !IsGameOver();
     }
    
     public Player GetLocalHumanPlayer()
@@ -87,11 +81,13 @@ public class GameManager : MonoBehaviour
             if (on_all_players_registered != null)
                 on_all_players_registered();
             connection_screen.gameObject.SetActive(false);
+
+            BeginMatch();
         }
     }
     public void OnWin(int winner)
     {
-        game_over = true;
+        State = MatchState.PostGame;
 
         if (on_player_win != null) on_player_win(winner);
     }
@@ -101,6 +97,8 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        State = MatchState.Setup;
+
         FindObjectOfType<Metaverse>().on_new_flag += OnNewFlag;
 
         // Players
@@ -111,6 +109,11 @@ public class GameManager : MonoBehaviour
     {
         player_scores[e.player_id] += 1;
         if (on_player_score != null) on_player_score(e.player_id);
+    }
+
+    private void BeginMatch()
+    {
+        State = MatchState.Play;
     }
 
 }
