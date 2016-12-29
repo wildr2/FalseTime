@@ -81,7 +81,7 @@ public class Player : NetworkBehaviour
 
         // Events
         mv.on_new_flag += OnNewFlag;
-
+        mv.on_view_set += OnViewSet;
 
         StartCoroutine(Initialize());
     }
@@ -355,9 +355,11 @@ public class Player : NetworkBehaviour
                 highlighted_action = ActionType.Attack;
                 planet.ShowHighlight(dm.GetActionColor(highlighted_action));
             }
-            else { } // No action
-
-            
+            else
+            {
+                highlighted_action = ActionType.None;
+                planet.ShowHighlight(new Color(0.5f, 0.5f, 0.5f));
+            }
         }
     }
     private void OnPlanetMouseExit(Planet planet)
@@ -373,6 +375,18 @@ public class Player : NetworkBehaviour
             
     }
 
+    private void OnViewSet(View view)
+    {
+        // check if selection is still valid
+        if (selected_planet != null)
+        {
+            if (selected_planet.OwnerID != PlayerID)
+            {
+                // Invalid selection
+                DeselectPlanet();
+            }
+        }
+    }
     private void OnNewFlag(NewFlagEvent e)
     {
         if (isServer)
