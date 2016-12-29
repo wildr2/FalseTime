@@ -14,6 +14,7 @@ public class Metaverse : MonoBehaviour
     private bool is_created = false;
 
     // Current View
+    private View prev_view;
     public View View { get; private set; }
 
     // Universes
@@ -99,6 +100,7 @@ public class Metaverse : MonoBehaviour
 
         time = Mathf.Clamp(time, 0, Universe.TimeLength);
 
+        prev_view = View;
         View = new View(universe, universe.GetState(time));
         LoadView();
         if (on_view_set != null) on_view_set(View);
@@ -362,11 +364,19 @@ public class Metaverse : MonoBehaviour
     }
     private void UpdateFlags()
     {
+        // Only update if viewing different universe than before
+        if (prev_view != null && prev_view.Universe == View.Universe)
+            return;
+
         for (int i = 0; i < dm.GetNumPlayers(); ++i)
         {
             for (int j = 0; j < Planets.Length; ++j)
             {
-                Planets[j].ShowFlag(i, player_flags[i][View.Universe.UniverseID][j]);
+                for (int k = 0; k < Universes.Length; ++k)
+                {
+                    Planets[j].ShowFlag(i, k,
+                        k == View.Universe.UniverseID && player_flags[i][k][j]);
+                }
             }
         }
     }
@@ -378,9 +388,11 @@ public class Metaverse : MonoBehaviour
             // New flag
             player_flags[player_id][universe_id][planet_id] = true;
 
-            if (View != null && View.Universe.UniverseID == universe_id)
+            if (View != null)
             {
-                Planets[planet_id].ShowFlag(player_id);
+                if (View.Universe.UniverseID == universe_id)
+                    Planets[planet_id].ShowFlag(player_id, universe_id);
+                Planets[planet_id].FlashFlag(player_id, universe_id);
             }
 
             // Event

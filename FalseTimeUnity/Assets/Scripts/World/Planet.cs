@@ -28,7 +28,7 @@ public class Planet : EventTrigger
     // Flags
     public Transform flags_parent;
     public Image flag_prefab;
-    private Image[] flags;
+    private Image[][] flags; // universe_id, player_id
 
     // Events
     public System.Action<Planet> on_pointer_enter;
@@ -68,13 +68,17 @@ public class Planet : EventTrigger
         sphere.transform.rotation = Quaternion.Euler(0, Random.value * 360f, 0);
 
         // Flags
-        flags = new Image[dm.GetNumPlayers()];
-        for (int i = 0; i < flags.Length; ++i)
+        flags = new Image[dm.num_universes][];
+        for (int i = 0; i < dm.num_universes; ++i)
         {
-            flags[i] = Instantiate(flag_prefab);
-            flags[i].transform.SetParent(flags_parent, false);
-            flags[i].color = dm.GetPlayerColor(i);
-            flags[i].gameObject.SetActive(false);
+            flags[i] = new Image[dm.GetNumPlayers()];
+            for (int j = 0; j < flags.Length; ++j)
+            {
+                flags[i][j] = Instantiate(flag_prefab);
+                flags[i][j].transform.SetParent(flags_parent, false);
+                flags[i][j].color = dm.GetPlayerColor(i);
+                flags[i][j].gameObject.SetActive(false);
+            }
         }
     }
     public void SetSize(float size)
@@ -116,9 +120,13 @@ public class Planet : EventTrigger
         sprite_sr.color = ownerID == -1 ? neutral_color : DataManager.Instance.GetPlayerColor(ownerID);
         text.color = (ownerID == -1 || !Ready) ? neutral_color : sprite_sr.color;
     }
-    public void ShowFlag(int player_id, bool show=true)
+    public void ShowFlag(int player_id, int universe_id, bool show=true)
     {
-        flags[player_id].gameObject.SetActive(show);
+        flags[universe_id][player_id].gameObject.SetActive(show);
+    }
+    public void FlashFlag(int player_id, int universe_id)
+    {
+        StartCoroutine(FlashFlag(flags[universe_id][player_id]));
     }
 
     public override void OnPointerEnter(PointerEventData eventData)
@@ -130,6 +138,36 @@ public class Planet : EventTrigger
     {
         if (on_pointer_exit != null) on_pointer_exit(this);
         base.OnPointerExit(eventData);
+    }
+
+
+    // PRIVATE MODIFIERS
+
+    private IEnumerator FlashFlag(Image flag)
+    {
+        // Wait for flag to be shown
+        while (!flag.gameObject.activeInHierarchy)
+            yield return null;
+
+        // Shrink
+        Vector3 scale = flag.rectTransform.localScale;
+        for (float t = 0; t < 1; t += UnityEngine.Time.deltaTime * 2f)
+        {
+            float s = Mathf.Lerp(10, 1, 1 - Mathf.Pow(1 - t, 2));
+            flag.rectTransform.localScale = scale * s;
+            
+            yield return null;
+        }
+        flag.rectTransform.localScale = scale;
+
+        // Flash
+        for (int i = 0; i < 16; ++i)
+        {
+            float s = i % 2 == 0 ? 2f : 1;
+            flag.rectTransform.localScale = scale * s;
+
+            yield return new WaitForSeconds(0.25f);
+        }
     }
 
 

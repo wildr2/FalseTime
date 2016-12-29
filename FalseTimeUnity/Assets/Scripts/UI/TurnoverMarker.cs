@@ -46,7 +46,7 @@ public class TurnoverMarker : MonoBehaviour
     private IEnumerator AnimateAlert()
     {
         // Shrink
-        for (float t = 0; t < 1; t += UnityEngine.Time.deltaTime * 2f)
+        for (float t = 0; t < 1; t += Time.deltaTime * 2f)
         {
             if (rt == null) yield break;
 
@@ -62,7 +62,6 @@ public class TurnoverMarker : MonoBehaviour
         rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Size);
 
         // Flash
-        Color color = GetComponent<Image>().color;
         for (int i = 0; i < 16; ++i)
         {
             if (rt == null) yield break;
@@ -70,7 +69,6 @@ public class TurnoverMarker : MonoBehaviour
             float s = i % 2 == 0 ? Size * 2f : Size;
             rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, s);
             rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, s);
-            //img.color = i % 2 == 0 ? Color.white : color;
             yield return new WaitForSeconds(0.25f);
         }
     }
