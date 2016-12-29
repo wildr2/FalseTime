@@ -1,0 +1,45 @@
+Initialize engine version: 5.5.0f3 (38b4efef76f0)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: NVIDIA NVS 5200M (ID=0x1140)
+    Vendor:   NVIDIA
+    VRAM:     973 MB
+    Driver:   10.18.13.5445
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.PlaymodeTestsRunner.dll (this message is harmless)
+Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.PlaymodeTestsRunner.dll into Unity Child Domain
+- Completed reload, in  0.029 seconds
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\System.dll (this message is harmless)
+desktop: 1600x900 50Hz; virtual: 1600x900 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 1.147003 ms
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 12.492112 ms
+
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 2877.
+Total: 1.575581 ms (FindLiveObjects: 0.162442 ms CreateObjectMapping: 0.035744 ms MarkObjects: 1.368547 ms  DeleteObjects: 0.008493 ms)
+
+<color=#0000FF>Registered player 0</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/DebugBindings.gen.cpp Line: 51)
+
+<color=#0000FF>Registered player 1 (AI)</color>
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/DebugBindings.gen.cpp Line: 51)
+
+Setting up 1 worker threads for Enlighten.
+  Thread -> id: 108c -> priority: 1 

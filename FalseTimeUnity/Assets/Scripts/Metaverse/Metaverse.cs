@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 
-/// Not created until Start()
+/// Not created at or after Start()
 /// </summary>
 public class Metaverse : MonoBehaviour
 {
