@@ -49,8 +49,8 @@ public class Universe
 
         for (int i = 0; i < mv.Planets.Length; ++i)
         {
-            int growth = Mathf.FloorToInt(mv.Planets[i].GetPopPerSecond(
-                newstate.planet_ownerIDs[i]) * time_since);
+            float growth = mv.Planets[i].GetPopPerSecond(
+                newstate.planet_ownerIDs[i]) * time_since;
 
             newstate.planet_pops[i] += growth;
         }
@@ -163,6 +163,13 @@ public class Universe
             if (all_settled) break;
 
             ++iteration;
+
+            // DEBUG
+            if (iteration > 50)
+            {
+                Debug.LogError("FAILED TO SETTLE");
+                break;
+            }
         }
 
         // Histories up to date
@@ -264,19 +271,8 @@ public class Universe
                 {
                     UVState state = GetState(e.flight.end_time);
 
-                    bool scored = false;
-                    bool took_planet = false;
-                    ApplyFlightEnd(state, e.flight, out scored, out took_planet);
+                    ApplyFlightEnd(state, e.flight);
 
-                    //if (took_planet)
-                    //{
-                    //    gm.MarkConquest(e.cmd.PlayerID, UniverseID, e.flight.end_planet_id);
-                    //}
-                    if (scored && !e.cmd.scored)
-                    {
-                        e.cmd.scored = true;
-                        e.cmd.score_time = e.flight.end_time;
-                    }
                     SaveKeyState(state);
                 }
             }
@@ -314,10 +310,8 @@ public class Universe
         }
         return node;
     }
-    private void ApplyFlightEnd(UVState state, Flight flight, out bool scored, out bool took_planet)
+    private void ApplyFlightEnd(UVState state, Flight flight)
     {
-        scored = false;
-        took_planet = false;
         state.flights.Remove(flight);
 
         if (flight.flight_type == FlightType.TimeTravelSend) return;
@@ -331,14 +325,12 @@ public class Universe
         else
         {
             // Attack
-            int new_pop = state.planet_pops[flight.end_planet_id] - flight.ships;
+            float new_pop = state.planet_pops[flight.end_planet_id] - flight.ships;
             if (new_pop >= 0) state.planet_pops[flight.end_planet_id] = new_pop;
             else
             {
                 // Allegiance change
                 new_pop = state.planet_pops[flight.end_planet_id] + flight.ships;
-                if (state.planet_ownerIDs[flight.end_planet_id] != -1) scored = true;
-                took_planet = true;
                 state.planet_pops[flight.end_planet_id] = new_pop;
                 state.planet_ownerIDs[flight.end_planet_id] = flight.owner_id;
             }
@@ -371,10 +363,12 @@ public class Universe
             }
             if (next_fwd_key_events.Values[i].flight.ships != fwd_key_events.Values[i].flight.ships)
             {
-                //Tools.Log(prev_fwd_key_events.Values[i].flight.ships + " != " + fwd_key_events.Values[i].flight.ships);
                 latest_change_time = Mathf.Min(latest_change_time, fwd_key_events.Keys[i]);
-                if (log) Tools.Log("Discrepency at " + latest_change_time + string.Format(" (ship numbers: {0} vs {1})",
-                    fwd_key_events.Values[i].flight.ships, next_fwd_key_events.Values[i].flight.ships));
+                if (log) Tools.Log(string.Format("Discrepency at {0}:{1} (ship numbers: {2} (p{4}) -> {3} (p{5}))",
+                    UniverseID,
+                    latest_change_time,
+                    fwd_key_events.Values[i].flight.ships, next_fwd_key_events.Values[i].flight.ships,
+                    fwd_key_events.Values[i].flight.start_planet_id, next_fwd_key_events.Values[i].flight.end_planet_id));
                 settled = false; break;
             }
         }
@@ -474,7 +468,7 @@ public class Universe
 public class UVState
 {
     public float time;
-    public int[] planet_pops;
+    public float[] planet_pops;
     public int[] planet_ownerIDs;
     public List<Flight> flights;
 
@@ -484,7 +478,7 @@ public class UVState
 
         flights = new List<Flight>();
 
-        planet_pops = new int[Planets.Length];
+        planet_pops = new float[Planets.Length];
         planet_ownerIDs = new int[Planets.Length];
 
         for (int i = 0; i < Planets.Length; ++i)
@@ -498,7 +492,7 @@ public class UVState
         time = to_copy.time;
 
         int planets_n = to_copy.planet_pops.Length;
-        planet_pops = new int[planets_n];
+        planet_pops = new float[planets_n];
         planet_ownerIDs = new int[planets_n];
         System.Array.Copy(to_copy.planet_pops, planet_pops, planets_n);
         System.Array.Copy(to_copy.planet_ownerIDs, planet_ownerIDs, planets_n);
@@ -514,8 +508,6 @@ public class UVState
 public class PlayerCmd
 {
     public int cmd_id;
-    public bool scored = false;
-    public float score_time;
     public bool valid;
     public float time;
     public int player_id;
@@ -632,7 +624,7 @@ public class Turnover
 {
     public float time;
     public int planet_id;
-    public int new_pop;
+    public float new_pop;
     public int old_owner_id;
     public int new_owner_id;
 

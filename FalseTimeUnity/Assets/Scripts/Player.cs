@@ -138,6 +138,18 @@ public class Player : NetworkBehaviour
             yield return null;
         }
     }
+    private void Update()
+    {
+        if (isLocalPlayer) LocalUpdate();
+    }
+    private void LocalUpdate()
+    {
+        if (gm.State != MatchState.Play) return;
+
+        // Power Growth
+        SetPower(Mathf.Min(power + 1f / seconds_per_power * Time.deltaTime, max_power));
+    }
+
     private IEnumerator AIUpdate()
     {
         while (true)
@@ -147,6 +159,7 @@ public class Player : NetworkBehaviour
 
             PlayerCmd best_cmd = null;
             Universe best_cmd_uv = null;
+            ActionType best_cmd_actiontype = ActionType.None;
             float best_score = float.MinValue;
 
             // Find best command
@@ -166,55 +179,29 @@ public class Player : NetworkBehaviour
                         {
                             if (mv.Routes[i][j] == null) continue; // target planet cannot be selected planet
 
-                            float flight_time = mv.GetPlanetDistance(i,j) / Flight.speed;
-                            UVState projected_state = uv.GetState(time + flight_time + 0.1f);
-
-                            int ships_to_send = Mathf.CeilToInt(state.planet_pops[i] / 2f);
-
-                            if (state.planet_ownerIDs[j] == player_id) continue; // skip transfers
-                            if (projected_state.planet_ownerIDs[j] == player_id) continue; // skip transfers (attacks that become transfers)
-                            if (ships_to_send < projected_state.planet_pops[j] + 2) continue; // skip non takeovers
-                            
-
-                            float score = 0;
-
-                            // Current time
-                            score -= (time / Universe.TimeLength) * 1f;
-
-                            // Taking enemy planet
-                            if (projected_state.planet_ownerIDs[j] != -1) score += 30;
-
-                            // Units remaining on target planet
-                            //score += (ships_to_send + projected_state.planet_pops[j]) * 0.15f;
-
-                            // Units remaining on selected planet
-                            //score += (state.planet_pops[i] - ships_to_send) * 0.15f;
-
-                            // Target planet size
-                            score += mv.Planets[j].Size * 5f;
-
-
                             // Compare to current best command
+                            PlayerCmd new_cmd = new PlayerCmd(time, i, j, player_id);
+                            highlighted_action = GetCmdActionType(new_cmd, state);
+                            float score = AIScoreCmd(uv, state, new_cmd);
+
                             if (score > best_score)
                             {
-                                best_cmd = new PlayerCmd(time, i, j, player_id);
+                                best_cmd = new_cmd;
                                 best_cmd_uv = uv;
+                                best_cmd_actiontype = highlighted_action;
                                 best_score = score;
                             }
-                            //Tools.Log("j: " + j);
                         }
-                        //Tools.Log("i: " + i);
                     }
 
-                    //Tools.Log("time: " + time);
                     yield return null;
                 }
-                //Tools.Log("uv: " + uv.UniverseID);
             }
 
             if (best_cmd != null)
             {
-                highlighted_action = ActionType.Attack;
+                highlighted_action = best_cmd_actiontype;
+
                 while (gm.State != MatchState.Play || !HasEnoughPower()) yield return null;
 
                 // Do best action
@@ -228,16 +215,75 @@ public class Player : NetworkBehaviour
             yield return new WaitForSeconds(Random.Range(0, 5));
         }
     }
-    private void Update()
+    private float AIScoreCmd(Universe uv, UVState cmd_state, PlayerCmd cmd)
     {
-        if (isLocalPlayer) LocalUpdate();
-    }
-    private void LocalUpdate()
-    {
-        if (gm.State != MatchState.Play) return;
+        float score = 0;
+        int p0 = cmd.selected_planet_id;
+        int p1 = cmd.target_planet_id;
 
-        // Power Growth
-        SetPower(Mathf.Min(power + 1f / seconds_per_power * Time.deltaTime, max_power));
+
+        // Determine flight arrive state and universe
+        float flight_time = mv.GetPlanetDistance(p0, p1) / Flight.speed;
+        UnivTime arrival_ut = new UnivTime(0, 0);
+
+        if (highlighted_action == ActionType.Wormhole)
+        {
+            UnivTime exit = mv.Routes[p0][p1].Wormhole.GetExit(uv.UniverseID, cmd.time);
+            arrival_ut.time = exit.time + flight_time + 0.1f;
+            arrival_ut.universe = exit.universe;
+        }
+        else
+        {
+            arrival_ut.time = cmd.time + flight_time + 0.1f;
+            arrival_ut.universe = uv.UniverseID;
+        }
+
+        if (arrival_ut.time > Universe.TimeLength) return -500; // skip 'too late' flights
+
+        UVState arrival_state = mv.Universes[arrival_ut.universe].GetState(arrival_ut.time);
+
+        // Info
+        int ships_to_send = Mathf.CeilToInt(cmd_state.planet_pops[p0] / 2f);
+        bool has_flag = mv.HasFlag(PlayerID, uv.UniverseID, p1);
+        float arrival_time_pct = arrival_ut.time / Universe.TimeLength;
+        float inv_arrival_time_pct = 1 - arrival_time_pct;
+        float earlier_bonus = inv_arrival_time_pct * 0.2f + 0.8f;
+
+        score += ships_to_send * inv_arrival_time_pct;// * inv_arrival_time_pct;
+
+        // Attack / Attack over wormhole
+        //if (arrival_state.planet_ownerIDs[p1] != cmd_state.planet_ownerIDs[p0])
+        //{
+        //    // Takeover
+        //    if (ships_to_send > arrival_state.planet_pops[p1] + 1)
+        //    {
+        //        int new_pop = ships_to_send + arrival_state.planet_pops[p1];
+
+        //        //if (!has_flag) score += 50; // New flag
+        //        //score += (new_pop / 100f) * 100f * earlier_bonus; // New population size
+        //    }
+        //    // Damage
+        //    else
+        //    {
+        //        //if (!has_flag) score += 5; // Towards new flag
+        //    }
+
+        //    // Against enemy planet
+        //    //if (arrival_state.planet_ownerIDs[p1] != -1) score += (ships_to_send / 100f) * 50f * earlier_bonus;
+        //}
+        // Transfer to the past
+        //else if (arrival_ut.time < time)
+        //{
+        //    score += (ships_to_send / 100f) * 50f * earlier_bonus; // Reinforcement size
+        //}                            
+
+        // Target planet size
+        //score += mv.Planets[p1].Size * 20f * earlier_bonus;
+
+        // Command cost
+        //score -= GetReqPower();
+
+        return score;
     }
 
     private void DeselectPlanet()
@@ -429,5 +475,24 @@ public class Player : NetworkBehaviour
     {
         gm.OnWin(winner);
         DeselectPlanet();
+    }
+
+
+    // Helpers
+
+    private ActionType GetCmdActionType(PlayerCmd cmd, UVState cmd_state)
+    {
+        Wormhole wh = mv.Routes[cmd.selected_planet_id][cmd.target_planet_id].Wormhole;
+        if (wh != null) return ActionType.Wormhole;
+
+        if (cmd_state.planet_ownerIDs[cmd.selected_planet_id] !=
+            cmd_state.planet_ownerIDs[cmd.target_planet_id])
+            return ActionType.Attack;
+
+        if (cmd_state.planet_ownerIDs[cmd.selected_planet_id] ==
+            cmd_state.planet_ownerIDs[cmd.target_planet_id])
+            return ActionType.Transfer;
+
+        return ActionType.None;
     }
 }

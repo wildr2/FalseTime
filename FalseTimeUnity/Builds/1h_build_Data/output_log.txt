@@ -17,19 +17,19 @@ Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\False
 Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.PlaymodeTestsRunner.dll (this message is harmless)
 Loading C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\UnityEngine.PlaymodeTestsRunner.dll into Unity Child Domain
-- Completed reload, in  0.029 seconds
+- Completed reload, in  0.147 seconds
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\Robert Wild\OneDrive\_ONLINE\Personal\Game Dev\FalseTime\FalseTimeUnity\Builds\1h_build_Data\Managed\System.dll (this message is harmless)
 desktop: 1600x900 50Hz; virtual: 1600x900 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 1.147003 ms
+UnloadTime: 2.822740 ms
 Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 12.492112 ms
+UnloadTime: 5.053398 ms
 
-Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 2877.
-Total: 1.575581 ms (FindLiveObjects: 0.162442 ms CreateObjectMapping: 0.035744 ms MarkObjects: 1.368547 ms  DeleteObjects: 0.008493 ms)
+Unloading 3 unused Assets to reduce memory usage. Loaded Objects now: 3030.
+Total: 2.012653 ms (FindLiveObjects: 0.214819 ms CreateObjectMapping: 0.061225 ms MarkObjects: 1.727052 ms  DeleteObjects: 0.008847 ms)
 
 <color=#0000FF>Registered player 0</color>
 
@@ -42,4 +42,4 @@ Total: 1.575581 ms (FindLiveObjects: 0.162442 ms CreateObjectMapping: 0.035744 m
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/DebugBindings.gen.cpp Line: 51)
 
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 108c -> priority: 1 
+  Thread -> id: 363c -> priority: 1 

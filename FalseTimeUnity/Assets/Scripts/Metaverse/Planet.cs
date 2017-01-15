@@ -11,7 +11,7 @@ public class Planet : EventTrigger
     public float Radius { get; private set; }
 
     public float Size { get; private set; }
-    public int Pop { get; private set; }
+    public float Pop { get; private set; }
     public int OwnerID { get; private set; }
     public bool Ready { get; private set; }
 
@@ -44,7 +44,7 @@ public class Planet : EventTrigger
 
     // PUBLIC MODIFIERS
 
-    public void Initialize(int id, float size, int pop, int ownerID)
+    public void Initialize(int id, float size, float pop, int ownerID)
     {
         DataManager dm = DataManager.Instance;
 
@@ -105,15 +105,15 @@ public class Planet : EventTrigger
         Ready = ready;
         text.color = ready ? sprite_sr.color : neutral_color;
     }
-    public void SetPop(int pop)
+    public void SetPop(float pop)
     {
         Pop = pop;
         text.text = pop.ToString();
     }
-    public void SetPop(int pop, int ownerID)
+    public void SetPop(float pop, int ownerID)
     {
         Pop = pop;
-        text.text = pop.ToString();
+        text.text = Mathf.FloorToInt(pop).ToString();
 
         OwnerID = ownerID;
         sprite_sr.color = ownerID == -1 ? neutral_color : DataManager.Instance.GetPlayerColor(ownerID);

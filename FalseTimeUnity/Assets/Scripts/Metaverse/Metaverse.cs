@@ -49,6 +49,10 @@ public class Metaverse : MonoBehaviour
     {
         return is_created;
     }
+    public bool HasFlag(int player, int universe, int planet)
+    {
+        return player_flags[player][universe][planet];
+    }
     
     public bool[] GetPlanetsReady(Universe uv, UVState state)
     {
